@@ -328,8 +328,22 @@ def tramitar_processo(id):
             historico.tipo_prazo = form.tipo_prazo.data
             historico.prazo_inicio = datetime.utcnow()
             
-            # Calcula a data final do prazo (implementação básica)
-            historico.prazo_fim = historico.prazo_inicio + timedelta(days=historico.dias_prazo)
+            # Calcula a data final do prazo considerando dias úteis ou corridos
+            if form.tipo_prazo.data == 'util':
+                # Função para verificar se é dia útil (não é sábado nem domingo)
+                def is_workday(date):
+                    return date.weekday() < 5  # 5 = Sábado, 6 = Domingo
+                
+                dias_contados = 0
+                data_atual = historico.prazo_inicio
+                while dias_contados < historico.dias_prazo:
+                    data_atual += timedelta(days=1)
+                    if is_workday(data_atual):
+                        dias_contados += 1
+                historico.prazo_fim = data_atual
+            else:
+                # Se for dias corridos, soma direto
+                historico.prazo_fim = historico.prazo_inicio + timedelta(days=historico.dias_prazo)
         db.session.add(historico)
         
         # Criar notificação para o responsável do processo
