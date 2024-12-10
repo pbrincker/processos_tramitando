@@ -41,8 +41,8 @@ class ProcessoForm(FlaskForm):
 class TramitacaoForm(FlaskForm):
     status = SelectField('Fase', validators=[DataRequired()])
     observacao = TextAreaField('Observação', validators=[DataRequired()])
-    data_registro = StringField('Data do Registro', validators=[DataRequired()])
-    habilitar_prazo = BooleanField('Habilitar Prazo')
+    data_registro = StringField('Data do Registro')
+    habilitar_prazo = BooleanField('Habilitar Prazo', default=False)
     dias_prazo = IntegerField('Dias de Prazo')
     tipo_prazo = SelectField('Tipo de Prazo', 
         choices=[('util', 'Dias Úteis'), ('corrido', 'Dias Corridos')],

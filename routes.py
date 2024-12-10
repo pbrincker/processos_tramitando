@@ -331,8 +331,8 @@ def tramitar_processo(id):
             created_at=data_registro  # Usa a mesma data do registro
         )
 
-        # Se o prazo estiver habilitado, adiciona as informações de prazo
-        if form.habilitar_prazo.data and form.dias_prazo.data:
+        # Se o prazo estiver habilitado e os campos estiverem preenchidos, adiciona as informações de prazo
+        if form.habilitar_prazo.data and form.dias_prazo.data is not None and form.dias_prazo.data > 0:
             historico.dias_prazo = form.dias_prazo.data
             historico.tipo_prazo = form.tipo_prazo.data
             historico.prazo_inicio = data_registro
