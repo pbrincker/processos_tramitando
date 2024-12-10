@@ -319,6 +319,17 @@ def tramitar_processo(id):
             observacao=form.observacao.data,
             usuario_id=current_user.id
         )
+
+        # Se o prazo estiver habilitado, adiciona as informações de prazo
+        if form.habilitar_prazo.data:
+            from datetime import timedelta, datetime
+            
+            historico.dias_prazo = form.dias_prazo.data
+            historico.tipo_prazo = form.tipo_prazo.data
+            historico.prazo_inicio = datetime.utcnow()
+            
+            # Calcula a data final do prazo (implementação básica)
+            historico.prazo_fim = historico.prazo_inicio + timedelta(days=historico.dias_prazo)
         db.session.add(historico)
         
         # Criar notificação para o responsável do processo

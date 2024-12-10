@@ -45,6 +45,16 @@ class ProcessoHistorico(db.Model):
     observacao = db.Column(db.Text)
     usuario_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    prazo_inicio = db.Column(db.DateTime)
+    prazo_fim = db.Column(db.DateTime)
+    dias_prazo = db.Column(db.Integer)
+    tipo_prazo = db.Column(db.String(20))  # 'util' ou 'corrido'
+    
+    @property
+    def prazo_status(self):
+        if not self.prazo_fim:
+            return None
+        return 'no_prazo' if datetime.utcnow() <= self.prazo_fim else 'vencido'
 
 class ProcessoFase(db.Model):
     id = db.Column(db.Integer, primary_key=True)

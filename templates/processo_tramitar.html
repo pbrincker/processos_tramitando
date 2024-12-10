@@ -33,6 +33,26 @@
                         {{ form.observacao(class="form-control", rows=3, placeholder="Descreva o motivo da tramitação...") }}
                     </div>
 
+                    <div class="mb-3">
+                        <div class="form-check mb-2">
+                            {{ form.habilitar_prazo(class="form-check-input") }}
+                            {{ form.habilitar_prazo.label(class="form-check-label") }}
+                        </div>
+                        
+                        <div id="prazoFields" style="display: none;">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{ form.dias_prazo.label(class="form-label") }}
+                                    {{ form.dias_prazo(class="form-control", type="number", min="1") }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form.tipo_prazo.label(class="form-label") }}
+                                    {{ form.tipo_prazo(class="form-select") }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                         <a href="{{ url_for('visualizar_processo', id=processo.id) }}" class="btn btn-secondary me-md-2">Cancelar</a>
                         <button type="submit" class="btn btn-primary">Tramitar</button>
@@ -42,4 +62,35 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const habilitarPrazo = document.getElementById('habilitar_prazo');
+    const prazoFields = document.getElementById('prazoFields');
+    const statusSelect = document.getElementById('status');
+
+    // Função para mostrar/esconder campos de prazo
+    function togglePrazoFields() {
+        prazoFields.style.display = habilitarPrazo.checked ? 'block' : 'none';
+    }
+
+    // Atualiza visibilidade inicial
+    togglePrazoFields();
+
+    // Adiciona listener para mudanças no checkbox
+    habilitarPrazo.addEventListener('change', togglePrazoFields);
+
+    // Se status for "procuradoria", pre-configura os campos de prazo
+    statusSelect.addEventListener('change', function() {
+        if (this.value === 'procuradoria') {
+            habilitarPrazo.checked = true;
+            document.getElementById('dias_prazo').value = '10';
+            document.getElementById('tipo_prazo').value = 'util';
+            togglePrazoFields();
+        }
+    });
+});
+</script>
 {% endblock %}

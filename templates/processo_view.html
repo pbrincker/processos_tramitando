@@ -79,6 +79,17 @@
                     {% if registro.observacao %}
                     <p class="text-muted">{{ registro.observacao }}</p>
                     {% endif %}
+                    {% if registro.prazo_fim %}
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            Prazo: {{ registro.dias_prazo }} dias {{ registro.tipo_prazo }}s
+                            ({{ registro.prazo_inicio.strftime('%d/%m/%Y') }} - {{ registro.prazo_fim.strftime('%d/%m/%Y') }})
+                            <span class="badge bg-{{ 'success' if registro.prazo_status == 'no_prazo' else 'danger' }}">
+                                {{ 'No Prazo' if registro.prazo_status == 'no_prazo' else 'Vencido' }}
+                            </span>
+                        </small>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
             {% endfor %}
