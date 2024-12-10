@@ -44,6 +44,7 @@ class ProcessoHistorico(db.Model):
     status_novo = db.Column(db.String(50))
     observacao = db.Column(db.Text)
     usuario_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    data_registro = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     prazo_inicio = db.Column(db.DateTime)
     prazo_fim = db.Column(db.DateTime)

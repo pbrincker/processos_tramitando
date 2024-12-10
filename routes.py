@@ -324,7 +324,8 @@ def tramitar_processo(id):
             status_novo=processo.status,
             observacao=form.observacao.data,
             usuario_id=current_user.id,
-            data_registro=data_registro
+            data_registro=data_registro,
+            created_at=data_registro
         )
 
         # Se o prazo estiver habilitado, adiciona as informações de prazo
