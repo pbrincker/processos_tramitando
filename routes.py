@@ -364,23 +364,24 @@ def tramitar_processo(id):
         # Adiciona informações de prazo apenas se habilitado
         # Processa prazo apenas se estiver habilitado (a validação já garantiu que os dados estão corretos)
         if form.habilitar_prazo.data:
-            # O form.validate() já converteu dias_prazo para inteiro
-            dias_prazo = int(form.dias_prazo.data)
-            historico.dias_prazo = dias_prazo
+            historico.dias_prazo = form.dias_prazo.data
             historico.tipo_prazo = form.tipo_prazo.data
             historico.prazo_inicio = data_registro
 
             # Calcula data fim baseado no tipo de prazo
             if form.tipo_prazo.data == 'util':
                 dias_contados = 0
+                # O form.validate() já converteu dias_prazo para inteiro
+                dias_prazo = int(form.dias_prazo.data)
+                historico.dias_prazo = dias_prazo
                 data_prazo = historico.prazo_inicio
-                while dias_contados < dias_prazo:
+                while dias_contados < historico.dias_prazo:
                     data_prazo += timedelta(days=1)
                     if data_prazo.weekday() < 5:  # Não é sábado nem domingo
                         dias_contados += 1
                 historico.prazo_fim = data_prazo
             else:
-                historico.prazo_fim = historico.prazo_inicio + timedelta(days=dias_prazo)
+                historico.prazo_fim = historico.prazo_inicio + timedelta(days=historico.dias_prazo)
             
             logger.debug(f"Prazo configurado: início={historico.prazo_inicio}, fim={historico.prazo_fim}")
         
