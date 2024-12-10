@@ -331,8 +331,13 @@ def tramitar_processo(id):
             created_at=data_registro  # Usa a mesma data do registro
         )
 
-        # Se o prazo estiver habilitado e os campos estiverem preenchidos, adiciona as informações de prazo
-        if form.habilitar_prazo.data and form.dias_prazo.data is not None and form.dias_prazo.data > 0:
+        # Se a data de registro foi informada, usa ela. Caso contrário, usa a data atual
+        data_registro = datetime.strptime(f"{form.data_registro.data} 00:00:00", '%Y-%m-%d %H:%M:%S') if form.data_registro.data else datetime.now()
+        historico.data_registro = data_registro
+        historico.created_at = data_registro
+
+        # Se o prazo estiver habilitado e dias de prazo informado, adiciona as informações de prazo
+        if form.habilitar_prazo.data and form.dias_prazo.data:
             historico.dias_prazo = form.dias_prazo.data
             historico.tipo_prazo = form.tipo_prazo.data
             historico.prazo_inicio = data_registro
@@ -353,6 +358,7 @@ def tramitar_processo(id):
             else:
                 # Se for dias corridos, soma direto
                 historico.prazo_fim = historico.prazo_inicio + timedelta(days=historico.dias_prazo)
+        
         db.session.add(historico)
         
         # Criar notificação para o responsável do processo
