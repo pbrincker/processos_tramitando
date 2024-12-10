@@ -144,10 +144,11 @@ def dashboard():
     # Aplica filtros da URL
     if objeto := request.args.get('objeto'):
         query = query.filter(Processo.objeto.ilike(f'%{objeto}%'))
-    if status := request.args.get('status'):
-        query = query.filter_by(status=status)
-    if responsavel := request.args.get('responsavel'):
-        query = query.filter_by(responsavel_id=int(responsavel))
+    if status_list := request.args.getlist('status'):
+        query = query.filter(Processo.status.in_(status_list))
+    if responsavel_list := request.args.getlist('responsavel'):
+        responsavel_ids = [int(r) for r in responsavel_list]
+        query = query.filter(Processo.responsavel_id.in_(responsavel_ids))
     
     # Executa a consulta
     processos = query.all()

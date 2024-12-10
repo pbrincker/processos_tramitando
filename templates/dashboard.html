@@ -82,19 +82,21 @@
             </div>
             <div class="col-md-4">
                 <label class="form-label">Status</label>
-                <select class="form-select" name="status">
-                    <option value="">Todos</option>
+                <select class="form-select" name="status" multiple size="4">
                     {% for fase in ProcessoFase.query.filter_by(ativo=True).order_by(ProcessoFase.ordem).all() %}
-                    <option value="{{ fase.codigo }}">{{ fase.descricao }}</option>
+                    <option value="{{ fase.codigo }}" {% if fase.codigo in request.args.getlist('status') %}selected{% endif %}>
+                        {{ fase.descricao }}
+                    </option>
                     {% endfor %}
                 </select>
             </div>
             <div class="col-md-4">
                 <label class="form-label">Responsável</label>
-                <select class="form-select" name="responsavel">
-                    <option value="">Todos</option>
+                <select class="form-select" name="responsavel" multiple size="4">
                     {% for user in User.query.filter_by(is_active=True).order_by(User.username).all() %}
-                    <option value="{{ user.id }}">{{ user.username }}</option>
+                    <option value="{{ user.id }}" {% if user.id|string in request.args.getlist('responsavel') %}selected{% endif %}>
+                        {{ user.username }}
+                    </option>
                     {% endfor %}
                 </select>
             </div>
@@ -259,28 +261,38 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 // Controle de visibilidade do dashboard
-    const toggleBtn = document.getElementById('toggleDashboard');
-    const dashboardContent = document.getElementById('dashboardContent');
-    const toggleIcon = toggleBtn.querySelector('i');
-    const toggleText = toggleBtn.querySelector('span');
-    
-    // Carrega o estado salvo
-    const isDashboardVisible = localStorage.getItem('dashboardVisible') !== 'false';
-    dashboardContent.style.display = isDashboardVisible ? 'block' : 'none';
-    updateToggleButton(!isDashboardVisible);
-    
-    toggleBtn.addEventListener('click', function() {
-        const isVisible = dashboardContent.style.display !== 'none';
-        dashboardContent.style.display = isVisible ? 'none' : 'block';
-        localStorage.setItem('dashboardVisible', !isVisible);
-        updateToggleButton(isVisible);
-    });
-    
-    function updateToggleButton(isHidden) {
-        toggleIcon.setAttribute('data-feather', isHidden ? 'eye' : 'eye-off');
-        toggleText.textContent = isHidden ? 'Mostrar Dashboard' : 'Ocultar Dashboard';
-        feather.replace();
+    function initializeDashboardToggle() {
+        const toggleBtn = document.getElementById('toggleDashboard');
+        const dashboardContent = document.getElementById('dashboardContent');
+        
+        if (!toggleBtn || !dashboardContent) return;
+        
+        const toggleIcon = toggleBtn.querySelector('i');
+        const toggleText = toggleBtn.querySelector('span');
+        
+        function updateToggleButton(isHidden) {
+            if (toggleIcon && toggleText) {
+                toggleIcon.setAttribute('data-feather', isHidden ? 'eye' : 'eye-off');
+                toggleText.textContent = isHidden ? 'Mostrar Dashboard' : 'Ocultar Dashboard';
+                feather.replace();
+            }
+        }
+        
+        // Carrega o estado salvo
+        const isDashboardVisible = localStorage.getItem('dashboardVisible') !== 'false';
+        dashboardContent.style.display = isDashboardVisible ? 'block' : 'none';
+        updateToggleButton(!isDashboardVisible);
+        
+        toggleBtn.addEventListener('click', function() {
+            const isVisible = dashboardContent.style.display !== 'none';
+            dashboardContent.style.display = isVisible ? 'none' : 'block';
+            localStorage.setItem('dashboardVisible', !isVisible);
+            updateToggleButton(isVisible);
+        });
     }
+    
+    // Inicializa o toggle do dashboard
+    initializeDashboardToggle();
 
     // Controle dos filtros
     const filterForm = document.getElementById('filterForm');
