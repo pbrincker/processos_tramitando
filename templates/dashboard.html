@@ -300,10 +300,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Restaura valores dos filtros da URL
     const urlParams = new URLSearchParams(window.location.search);
-    for (const [key, value] of urlParams) {
+    for (let [key, values] of urlParams.entries()) {
         const input = filterForm.elements[key];
         if (input) {
-            input.value = value;
+            if (input.type === 'select-multiple') {
+                // Para select multiple, pode haver múltiplos valores para a mesma key
+                const selectedValues = urlParams.getAll(key);
+                Array.from(input.options).forEach(option => {
+                    option.selected = selectedValues.includes(option.value);
+                });
+            } else {
+                input.value = values;
+            }
         }
     }
     
