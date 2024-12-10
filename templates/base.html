@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-bs-theme="dark">
+<html lang="pt-BR" data-bs-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Gestão de Licitações</title>
-    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link href="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('index') }}">
                 <i data-feather="clipboard"></i> Sistema de Licitações
@@ -36,6 +36,7 @@
                     {% endif %}
                     {% endif %}
                 </ul>
+                
                 <ul class="navbar-nav">
                     {% if current_user.is_authenticated %}
                     <li class="nav-item">
@@ -71,6 +72,7 @@
                         <a class="nav-link" href="{{ url_for('login') }}">Login</a>
                     </li>
                     {% endif %}
+                    <button id="themeToggle" class="btn btn-outline-secoundary"><i data-feather="moon"></i></button>
                 </ul>
             </div>
         </div>
@@ -94,6 +96,37 @@
     <script>
         feather.replace();
     </script>
+    <script>
+      // Seleciona o botão e o elemento <html>
+      const themeToggle = document.getElementById('themeToggle');
+      const htmlElement = document.documentElement;
+
+      // Checa o tema salvo no LocalStorage ou define "light" como padrão
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      setTheme(savedTheme);
+
+      // Alterna o tema ao clicar no botão
+      themeToggle.addEventListener('click', () => {
+        const currentTheme = htmlElement.getAttribute('data-bs-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        setTheme(newTheme);
+        localStorage.setItem('theme', newTheme); // Salva no LocalStorage
+      });
+
+      // Função para aplicar o tema
+        function setTheme(theme) {
+            htmlElement.setAttribute('data-bs-theme', theme);
+
+            // Atualiza o ícone no botão
+            const icon = theme === 'dark' ? 'sun' : 'moon';
+            themeToggle.innerHTML = `<i data-feather="${icon}"></i>`;
+
+            // Recarrega os ícones Feather
+            feather.replace();
+          }
+    </script>
+
+
     {% block scripts %}{% endblock %}
 </body>
 </html>

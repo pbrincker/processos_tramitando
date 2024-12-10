@@ -1,7 +1,7 @@
 from flask import render_template, redirect, url_for, flash, request
 from datetime import datetime
 from flask_login import login_user, logout_user, login_required, current_user
-from app import app, db, login_manager
+from main import app, db, login_manager
 from models import User, Processo, ProcessoHistorico, ProcessoFase, NotificacaoProcesso
 from forms import LoginForm, UserForm, ProcessoForm, TramitacaoForm, AlterarSenhaForm, ProcessoFaseForm
 
