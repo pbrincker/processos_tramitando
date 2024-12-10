@@ -306,24 +306,22 @@ def tramitar_processo(id):
     from datetime import datetime, timedelta
     processo = Processo.query.get_or_404(id)
     fases_ativas = ProcessoFase.query.filter_by(ativo=True).order_by(ProcessoFase.ordem).all()
-    form = TramitacaoForm(obj=processo)
+    form = TramitacaoForm()
     form.status.choices = [(fase.codigo, fase.descricao) for fase in fases_ativas]
-    
-    # Define a data atual como padrão para o formulário
-    hoje = datetime.now().strftime('%Y-%m-%d')
-    if not form.data_registro.data:
-        form.data_registro.data = hoje
     
     if form.validate_on_submit():
         status_anterior = processo.status
         processo.status = form.status.data
         
-        # Se data de registro foi informada, converte para datetime
+        # Define a data de registro (atual se não informada)
+        data_registro = datetime.now()
         if form.data_registro.data:
-            data_registro = datetime.strptime(f"{form.data_registro.data} 00:00:00", '%Y-%m-%d %H:%M:%S')
-        else:
-            data_registro = datetime.now()
+            try:
+                data_registro = datetime.strptime(form.data_registro.data, '%Y-%m-%d')
+            except (ValueError, TypeError):
+                pass
 
+        # Cria o histórico básico
         historico = ProcessoHistorico(
             processo_id=processo.id,
             status_anterior=status_anterior,
@@ -334,46 +332,53 @@ def tramitar_processo(id):
             created_at=data_registro
         )
 
-        # Só processa informações de prazo se estiver habilitado E dias de prazo informado
-        if form.habilitar_prazo.data and form.dias_prazo.data and form.dias_prazo.data > 0:
-            historico.dias_prazo = form.dias_prazo.data
-            historico.tipo_prazo = form.tipo_prazo.data
-            historico.prazo_inicio = data_registro
+        # Adiciona informações de prazo apenas se habilitado e dias informados
+        if form.habilitar_prazo.data and form.dias_prazo.data:
+            try:
+                dias_prazo = int(form.dias_prazo.data)
+                if dias_prazo > 0:
+                    historico.dias_prazo = dias_prazo
+                    historico.tipo_prazo = form.tipo_prazo.data
+                    historico.prazo_inicio = data_registro
+
+                    # Calcula data fim baseado no tipo de prazo
+                    if form.tipo_prazo.data == 'util':
+                        dias_contados = 0
+                        data_prazo = historico.prazo_inicio
+                        while dias_contados < dias_prazo:
+                            data_prazo += timedelta(days=1)
+                            if data_prazo.weekday() < 5:  # Não é sábado nem domingo
+                                dias_contados += 1
+                        historico.prazo_fim = data_prazo
+                    else:
+                        historico.prazo_fim = historico.prazo_inicio + timedelta(days=dias_prazo)
+            except (ValueError, TypeError):
+                pass  # Ignora erros de conversão e continua sem prazo
+        
+        try:
+            # Salva o histórico
+            db.session.add(historico)
             
-            # Calcula a data final do prazo considerando dias úteis ou corridos
-            if form.tipo_prazo.data == 'util':
-                # Função para verificar se é dia útil (não é sábado nem domingo)
-                def is_workday(date):
-                    return date.weekday() < 5  # 5 = Sábado, 6 = Domingo
-                
-                dias_contados = 0
-                data_prazo = historico.prazo_inicio
-                while dias_contados < historico.dias_prazo:
-                    data_prazo += timedelta(days=1)
-                    if is_workday(data_prazo):
-                        dias_contados += 1
-                historico.prazo_fim = data_prazo
-            else:
-                # Se for dias corridos, soma direto
-                historico.prazo_fim = historico.prazo_inicio + timedelta(days=historico.dias_prazo)
-        
-        db.session.add(historico)
-        
-        # Criar notificação para o responsável do processo
-        if processo.responsavel_id != current_user.id:
-            notificacao = NotificacaoProcesso(
-                processo_id=processo.id,
-                tipo='mudanca_status',
-                mensagem=f'O processo {processo.numero_processo} mudou de status para {processo.status}',
-                destinatario_id=processo.responsavel_id,
-                remetente_id=current_user.id
-            )
-            db.session.add(notificacao)
-        
-        db.session.commit()
-        
-        flash('Processo tramitado com sucesso!')
-        return redirect(url_for('dashboard'))
+            # Cria notificação para o responsável se necessário
+            if processo.responsavel_id != current_user.id:
+                notificacao = NotificacaoProcesso(
+                    processo_id=processo.id,
+                    tipo='mudanca_status',
+                    mensagem=f'O processo {processo.numero_processo} mudou de status para {processo.status}',
+                    destinatario_id=processo.responsavel_id,
+                    remetente_id=current_user.id
+                )
+                db.session.add(notificacao)
+            
+            # Commit das alterações
+            db.session.commit()
+            flash('Processo tramitado com sucesso!')
+            return redirect(url_for('dashboard'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash('Erro ao tramitar processo. Por favor, tente novamente.')
+            print(f"Erro ao tramitar processo: {str(e)}")
     
     return render_template('processo_tramitar.html', form=form, processo=processo)
 
