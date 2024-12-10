@@ -303,21 +303,24 @@ def editar_processo(id):
 @app.route('/processo/<int:id>/tramitar', methods=['GET', 'POST'])
 @login_required
 def tramitar_processo(id):
-    from datetime import datetime
+    from datetime import datetime, timedelta
     processo = Processo.query.get_or_404(id)
     fases_ativas = ProcessoFase.query.filter_by(ativo=True).order_by(ProcessoFase.ordem).all()
     form = TramitacaoForm(obj=processo)
     form.status.choices = [(fase.codigo, fase.descricao) for fase in fases_ativas]
     
-    data_atual = datetime.now()
-    form.data_registro.data = data_atual.strftime('%Y-%m-%d')  # Data padrão
-    hoje = data_atual.strftime('%Y-%m-%d')
+    # Define a data atual como padrão para o formulário
+    hoje = datetime.now().strftime('%Y-%m-%d')
+    if not form.data_registro.data:
+        form.data_registro.data = hoje
     
     if form.validate_on_submit():
         status_anterior = processo.status
         processo.status = form.status.data
         
-        data_registro = datetime.strptime(form.data_registro.data, '%Y-%m-%d')
+        # Converte a data do formulário para datetime, mantendo o horário como início do dia
+        data_registro = datetime.strptime(f"{form.data_registro.data} 00:00:00", '%Y-%m-%d %H:%M:%S')
+        
         historico = ProcessoHistorico(
             processo_id=processo.id,
             status_anterior=status_anterior,
@@ -325,13 +328,11 @@ def tramitar_processo(id):
             observacao=form.observacao.data,
             usuario_id=current_user.id,
             data_registro=data_registro,
-            created_at=data_registro
+            created_at=data_registro  # Usa a mesma data do registro
         )
 
         # Se o prazo estiver habilitado, adiciona as informações de prazo
-        if form.habilitar_prazo.data:
-            from datetime import timedelta, datetime
-            
+        if form.habilitar_prazo.data and form.dias_prazo.data:
             historico.dias_prazo = form.dias_prazo.data
             historico.tipo_prazo = form.tipo_prazo.data
             historico.prazo_inicio = data_registro
@@ -343,12 +344,12 @@ def tramitar_processo(id):
                     return date.weekday() < 5  # 5 = Sábado, 6 = Domingo
                 
                 dias_contados = 0
-                data_atual = historico.prazo_inicio
+                data_prazo = historico.prazo_inicio
                 while dias_contados < historico.dias_prazo:
-                    data_atual += timedelta(days=1)
-                    if is_workday(data_atual):
+                    data_prazo += timedelta(days=1)
+                    if is_workday(data_prazo):
                         dias_contados += 1
-                historico.prazo_fim = data_atual
+                historico.prazo_fim = data_prazo
             else:
                 # Se for dias corridos, soma direto
                 historico.prazo_fim = historico.prazo_inicio + timedelta(days=historico.dias_prazo)
