@@ -303,12 +303,15 @@ def editar_processo(id):
 @app.route('/processo/<int:id>/tramitar', methods=['GET', 'POST'])
 @login_required
 def tramitar_processo(id):
+    from datetime import datetime
     processo = Processo.query.get_or_404(id)
     fases_ativas = ProcessoFase.query.filter_by(ativo=True).order_by(ProcessoFase.ordem).all()
     form = TramitacaoForm(obj=processo)
     form.status.choices = [(fase.codigo, fase.descricao) for fase in fases_ativas]
-    form.data_registro.data = datetime.now().strftime('%Y-%m-%d')  # Data padrão
-    hoje = datetime.now().strftime('%Y-%m-%d')
+    
+    data_atual = datetime.now()
+    form.data_registro.data = data_atual.strftime('%Y-%m-%d')  # Data padrão
+    hoje = data_atual.strftime('%Y-%m-%d')
     
     if form.validate_on_submit():
         status_anterior = processo.status
