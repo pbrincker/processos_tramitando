@@ -34,6 +34,11 @@
                     </div>
 
                     <div class="mb-3">
+                        {{ form.data_registro.label(class="form-label") }}
+                        {{ form.data_registro(class="form-control", type="date", value=hoje) }}
+                    </div>
+
+                    <div class="mb-3">
                         <div class="form-check mb-2">
                             {{ form.habilitar_prazo(class="form-check-input") }}
                             {{ form.habilitar_prazo.label(class="form-check-label") }}

@@ -307,17 +307,21 @@ def tramitar_processo(id):
     fases_ativas = ProcessoFase.query.filter_by(ativo=True).order_by(ProcessoFase.ordem).all()
     form = TramitacaoForm(obj=processo)
     form.status.choices = [(fase.codigo, fase.descricao) for fase in fases_ativas]
+    form.data_registro.data = datetime.now().strftime('%Y-%m-%d')  # Data padrão
+    hoje = datetime.now().strftime('%Y-%m-%d')
     
     if form.validate_on_submit():
         status_anterior = processo.status
         processo.status = form.status.data
         
+        data_registro = datetime.strptime(form.data_registro.data, '%Y-%m-%d')
         historico = ProcessoHistorico(
             processo_id=processo.id,
             status_anterior=status_anterior,
             status_novo=processo.status,
             observacao=form.observacao.data,
-            usuario_id=current_user.id
+            usuario_id=current_user.id,
+            data_registro=data_registro
         )
 
         # Se o prazo estiver habilitado, adiciona as informações de prazo
