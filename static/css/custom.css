@@ -1,6 +1,10 @@
 /* Transições suaves para mudança de tema */
 * {
-    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    transition: background-color 0.5s ease-in-out,
+                color 0.5s ease-in-out,
+                border-color 0.5s ease-in-out,
+                box-shadow 0.5s ease-in-out,
+                transform 0.3s ease-in-out;
 }
 
 /* Estilos base */
@@ -57,9 +61,28 @@
 /* Melhorias visuais gerais */
 .card {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    transition: box-shadow 0.3s ease;
+    transition: all 0.5s ease-in-out;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
 .card:hover {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+/* Transições suaves para elementos específicos */
+.btn,
+.badge,
+.nav-link,
+.dropdown-item {
+    transition: all 0.3s ease-in-out !important;
+}
+
+[data-bs-theme="dark"] .card {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+[data-bs-theme="dark"] .card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
