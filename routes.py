@@ -334,7 +334,7 @@ def tramitar_processo(id):
             
             historico.dias_prazo = form.dias_prazo.data
             historico.tipo_prazo = form.tipo_prazo.data
-            historico.prazo_inicio = datetime.utcnow()
+            historico.prazo_inicio = data_registro
             
             # Calcula a data final do prazo considerando dias úteis ou corridos
             if form.tipo_prazo.data == 'util':
