@@ -43,7 +43,7 @@ class TramitacaoForm(FlaskForm):
     observacao = TextAreaField('Observação', validators=[DataRequired()])
     data_registro = StringField('Data do Registro', validators=[])
     habilitar_prazo = BooleanField('Habilitar Prazo', default=False)
-    dias_prazo = IntegerField('Dias de Prazo', validators=[], default=None)
+    dias_prazo = StringField('Dias de Prazo')
     tipo_prazo = SelectField('Tipo de Prazo', 
         choices=[('util', 'Dias Úteis'), ('corrido', 'Dias Corridos')],
         default='util',
@@ -52,13 +52,21 @@ class TramitacaoForm(FlaskForm):
     def validate(self):
         if not super().validate():
             return False
-        
+            
         if self.habilitar_prazo.data:
             if not self.dias_prazo.data:
-                self.dias_prazo.errors.append('Informe o número de dias quando habilitar o prazo')
+                self.dias_prazo.errors = ['Informe o número de dias quando habilitar o prazo']
                 return False
-            if self.dias_prazo.data <= 0:
-                self.dias_prazo.errors.append('O número de dias deve ser maior que zero')
+                
+            try:
+                dias = int(self.dias_prazo.data)
+                if dias <= 0:
+                    self.dias_prazo.errors = ['O número de dias deve ser maior que zero']
+                    return False
+                # Atualiza o valor do campo para o inteiro convertido
+                self.dias_prazo.data = dias
+            except ValueError:
+                self.dias_prazo.errors = ['Informe um número válido']
                 return False
         return True
 
