@@ -35,7 +35,7 @@ class Processo(db.Model):
     responsavel_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    historico = db.relationship('ProcessoHistorico', backref='processo', lazy=True, order_by=created_at.desc()) # 'ProcessoHistorico.created_at.desc()')
+    historico = db.relationship('ProcessoHistorico', backref='processo', lazy=True, order_by='ProcessoHistorico.created_at.desc()')
 
 class ProcessoHistorico(db.Model):
     id = db.Column(db.Integer, primary_key=True)
