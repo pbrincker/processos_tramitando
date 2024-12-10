@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Notificações</h2>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if notificacoes %}
+        <div class="list-group">
+            {% for notificacao in notificacoes %}
+            <div class="list-group-item list-group-item-action {% if not notificacao.lida %}active{% endif %}">
+                <div class="d-flex w-100 justify-content-between">
+                    <h6 class="mb-1">{{ notificacao.tipo|replace('_', ' ')|title }}</h6>
+                    <small>{{ notificacao.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+                </div>
+                <p class="mb-1">{{ notificacao.mensagem }}</p>
+                <small>
+                    De: {{ notificacao.remetente.username }} | 
+                    Processo: {{ notificacao.processo.numero_processo }}
+                </small>
+                {% if not notificacao.lida %}
+                <form method="POST" action="{{ url_for('marcar_notificacao_lida', id=notificacao.id) }}" class="mt-2">
+                    <button type="submit" class="btn btn-sm btn-light">Marcar como lida</button>
+                </form>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i data-feather="bell-off" class="text-muted mb-2" style="width: 48px; height: 48px;"></i>
+            <p class="text-muted">Não há notificações.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,23 @@
+.badge {
+    font-size: 0.9em;
+    padding: 0.5em 0.7em;
+}
+
+.feather {
+    width: 18px;
+    height: 18px;
+    vertical-align: text-bottom;
+}
+
+.navbar-brand .feather {
+    margin-right: 0.5rem;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.btn-sm .feather {
+    width: 14px;
+    height: 14px;
+}

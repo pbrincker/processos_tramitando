@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">Tramitar Processo {{ processo.numero_processo }}</h4>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <h6 class="text-muted">Fase Atual</h6>
+                    <span class="badge bg-{{ {
+                        'novo': 'info',
+                        'em_analise': 'warning',
+                        'em_licitacao': 'primary',
+                        'concluido': 'success',
+                        'cancelado': 'danger'
+                    }[processo.status] }}">
+                        {{ processo.status|replace('_', ' ')|title }}
+                    </span>
+                </div>
+
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    <div class="mb-3">
+                        {{ form.status.label(class="form-label") }}
+                        {{ form.status(class="form-select") }}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.observacao.label(class="form-label") }}
+                        {{ form.observacao(class="form-control", rows=3, placeholder="Descreva o motivo da tramitação...") }}
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('visualizar_processo', id=processo.id) }}" class="btn btn-secondary me-md-2">Cancelar</a>
+                        <button type="submit" class="btn btn-primary">Tramitar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

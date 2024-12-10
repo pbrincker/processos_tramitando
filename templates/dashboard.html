@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Dashboard de Processos</h2>
+    </div>
+    {% if current_user.is_admin %}
+    <div class="col text-end">
+        <a href="{{ url_for('novo_processo') }}" class="btn btn-primary">
+            <i data-feather="plus"></i> Novo Processo
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Cards de Métricas -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Total de Processos</h6>
+                <p class="h3 mb-0">{{ total_processos }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Valor Total</h6>
+                <p class="h3 mb-0">R$ {{ "%.2f"|format(valor_total) }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Distribuição por Status</h6>
+                <div style="height: 160px;">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Distribuição por Modalidade</h6>
+                <div style="height: 160px;">
+                    <canvas id="modalidadeChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabela de Processos -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Processos Recentes</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Número</th>
+                        <th>Objeto</th>
+                        <th>Status</th>
+                        <th>Data do Status</th>
+                        <th>Responsável</th>
+                        <th>Data Recebimento</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for processo in processos %}
+                    <tr>
+                        <td>{{ processo.numero_processo }}</td>
+                        <td>
+                            <div class="text-truncate" style="max-width: 300px;" data-bs-toggle="tooltip" title="{{ processo.objeto }}">
+                                {{ processo.objeto }}
+                            </div>
+                        </td>
+                        <td>
+                            {% set fase = ProcessoFase.query.filter_by(codigo=processo.status).first() %}
+                            <span class="badge bg-{{ fase.cor if fase else 'secondary' }}">
+                                {{ fase.descricao if fase else processo.status|replace('_', ' ')|title }}
+                            </span>
+                        </td>
+                        <td>
+                            {% set ultimo_status = processo.historico|selectattr('status_novo')|first %}
+                            {% if ultimo_status %}
+                                {{ ultimo_status.created_at.strftime('%d/%m/%Y') }}
+                            {% else %}
+                                {{ processo.created_at.strftime('%d/%m/%Y') }}
+                            {% endif %}
+                        </td>
+                        <td>{{ processo.responsavel.username }}</td>
+                        <td>{{ processo.data_recebimento.strftime('%d/%m/%Y') if processo.data_recebimento else 'Não definida' }}</td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="{{ url_for('visualizar_processo', id=processo.id) }}" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="Visualizar">
+                                    <i data-feather="eye"></i>
+                                </a>
+                                <a href="{{ url_for('tramitar_processo', id=processo.id) }}" class="btn btn-sm btn-outline-warning" data-bs-toggle="tooltip" title="Tramitar">
+                                    <i data-feather="git-branch"></i>
+                                </a>
+                                <a href="{{ url_for('editar_processo', id=processo.id) }}" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="Editar">
+                                    <i data-feather="edit-2"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gráfico de Status
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ processos_por_status.keys()|list|tojson }},
+            datasets: [{
+                data: {{ processos_por_status.values()|list|tojson }},
+                backgroundColor: [
+                    '#0d6efd', '#6c757d', '#198754', '#dc3545',
+                    '#ffc107', '#0dcaf0', '#6610f2', '#d63384'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        font: {
+                            size: 11
+                        },
+                        boxWidth: 15
+                    }
+                }
+            }
+        }
+    });
+
+    // Gráfico de Modalidade
+    const modalidadeCtx = document.getElementById('modalidadeChart').getContext('2d');
+    new Chart(modalidadeCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ processos_por_modalidade.keys()|list|tojson }},
+            datasets: [{
+                label: 'Quantidade de Processos',
+                data: {{ processos_por_modalidade.values()|list|tojson }},
+                backgroundColor: '#0d6efd'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1,
+                        font: {
+                            size: 11
+                        }
+                    }
+                },
+                x: {
+                    ticks: {
+                        font: {
+                            size: 11
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

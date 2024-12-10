@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Lista de Processos Licitatórios</h2>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form id="filterForm" method="GET" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Número do Processo</label>
+                <input type="text" class="form-control" name="numero_processo" value="{{ request.args.get('numero_processo', '') }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Modalidade</label>
+                <select class="form-select" name="modalidade">
+                    <option value="">Todas</option>
+                    <option value="pregao" {% if request.args.get('modalidade') == 'pregao' %}selected{% endif %}>Pregão</option>
+                    <option value="tomada" {% if request.args.get('modalidade') == 'tomada' %}selected{% endif %}>Tomada de Preços</option>
+                    <option value="concorrencia" {% if request.args.get('modalidade') == 'concorrencia' %}selected{% endif %}>Concorrência</option>
+                    <option value="dispensa" {% if request.args.get('modalidade') == 'dispensa' %}selected{% endif %}>Dispensa</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Status</label>
+                <select class="form-select" name="status">
+                    <option value="">Todos</option>
+                    <option value="novo" {% if request.args.get('status') == 'novo' %}selected{% endif %}>Novo</option>
+                    <option value="em_analise" {% if request.args.get('status') == 'em_analise' %}selected{% endif %}>Em Análise</option>
+                    <option value="em_licitacao" {% if request.args.get('status') == 'em_licitacao' %}selected{% endif %}>Em Licitação</option>
+                    <option value="concluido" {% if request.args.get('status') == 'concluido' %}selected{% endif %}>Concluído</option>
+                    <option value="cancelado" {% if request.args.get('status') == 'cancelado' %}selected{% endif %}>Cancelado</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Período</label>
+                <div class="input-group">
+                    <input type="date" class="form-control" name="data_inicio" value="{{ request.args.get('data_inicio', '') }}">
+                    <span class="input-group-text">até</span>
+                    <input type="date" class="form-control" name="data_fim" value="{{ request.args.get('data_fim', '') }}">
+                </div>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i data-feather="filter"></i> Filtrar
+                </button>
+                <a href="{{ url_for('lista_processos') }}" class="btn btn-secondary">
+                    <i data-feather="x"></i> Limpar Filtros
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>
+                            <a href="{{ url_for('lista_processos', **dict(request.args, **{'sort': 'numero_processo', 'direction': 'asc' if request.args.get('direction') == 'desc' else 'desc'})) }}" class="text-decoration-none text-white">
+                                Número 
+                                {% if request.args.get('sort') == 'numero_processo' %}
+                                <i data-feather="{{ 'chevron-up' if request.args.get('direction') == 'asc' else 'chevron-down' }}"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>Objeto</th>
+                        <th>Modalidade</th>
+                        <th>Status</th>
+                        <th>
+                            <a href="{{ url_for('lista_processos', **dict(request.args, **{'sort': 'valor_estimado', 'direction': 'asc' if request.args.get('direction') == 'desc' else 'desc'})) }}" class="text-decoration-none text-white">
+                                Valor Estimado
+                                {% if request.args.get('sort') == 'valor_estimado' %}
+                                <i data-feather="{{ 'chevron-up' if request.args.get('direction') == 'asc' else 'chevron-down' }}"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="{{ url_for('lista_processos', **dict(request.args, **{'sort': 'data_abertura', 'direction': 'asc' if request.args.get('direction') == 'desc' else 'desc'})) }}" class="text-decoration-none text-white">
+                                Data Recebimento
+                                {% if request.args.get('sort') == 'data_abertura' %}
+                                <i data-feather="{{ 'chevron-up' if request.args.get('direction') == 'asc' else 'chevron-down' }}"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>Responsável</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for processo in processos %}
+                    <tr>
+                        <td>{{ processo.numero_processo }}</td>
+                        <td>
+                            <div class="text-truncate" style="max-width: 300px;" data-bs-toggle="tooltip" title="{{ processo.objeto }}">
+                                {{ processo.objeto }}
+                            </div>
+                        </td>
+                        <td>{{ processo.modalidade|title }}</td>
+                        <td>
+                            <span class="badge bg-{{ {
+                                'licitacao_i': 'primary',
+                                'licitacao_ii': 'primary',
+                                'licitacao_iii': 'primary',
+                                'licitacao_iv': 'primary',
+                                'procuradoria': 'info',
+                                'secretaria': 'info',
+                                'recurso': 'warning',
+                                'amostra': 'secondary',
+                                'impugnacao': 'danger',
+                                'pedido_esclarecimento': 'warning'
+                            }[processo.status] }}">
+                                {{ processo.status|replace('_', ' ')|title }}
+                            </span>
+                        </td>
+                        <td>{{ "R$ %.2f"|format(processo.valor_estimado|float) if processo.valor_estimado else 'Não definido' }}</td>
+                        <td>{{ processo.data_recebimento.strftime('%d/%m/%Y') if processo.data_recebimento else 'Não definida' }}</td>
+                        <td>{{ processo.responsavel.username }}</td>
+                        <td>
+                            <div class="btn-group">
+                                {% if current_user.is_admin %}
+                                <a href="{{ url_for('editar_processo', id=processo.id) }}" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="Editar">
+                                    <i data-feather="edit-2"></i>
+                                </a>
+                                {% endif %}
+                                <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#historicoModal{{ processo.id }}" title="Histórico">
+                                    <i data-feather="clock"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Modal de Histórico -->
+                    <div class="modal fade" id="historicoModal{{ processo.id }}" tabindex="-1">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Histórico do Processo {{ processo.numero_processo }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="timeline">
+                                        {% for registro in processo.historico|sort(attribute='created_at', reverse=true) %}
+                                        <div class="mb-3 pb-3 border-bottom">
+                                            <div class="d-flex justify-content-between">
+                                                <strong>{{ registro.created_at.strftime('%d/%m/%Y %H:%M') }}</strong>
+                                                <span class="badge bg-secondary">{{ User.query.get(registro.usuario_id).username }}</span>
+                                            </div>
+                                            <div class="mt-2">
+                                                {% if registro.status_anterior %}
+                                                <p>Status alterado de <strong>{{ registro.status_anterior }}</strong> para <strong>{{ registro.status_novo }}</strong></p>
+                                                {% endif %}
+                                                {% if registro.observacao %}
+                                                <p class="text-muted">{{ registro.observacao }}</p>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if not processos %}
+        <div class="text-center py-4">
+            <i data-feather="inbox" class="text-muted mb-2" style="width: 48px; height: 48px;"></i>
+            <p class="text-muted">Nenhum processo encontrado com os filtros selecionados.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

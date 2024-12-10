@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">Alterar Senha</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    <div class="mb-3">
+                        {{ form.senha_atual.label(class="form-label") }}
+                        {{ form.senha_atual(class="form-control") }}
+                        {% if form.senha_atual.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.senha_atual.errors %}
+                            <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.nova_senha.label(class="form-label") }}
+                        {{ form.nova_senha(class="form-control") }}
+                        {% if form.nova_senha.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.nova_senha.errors %}
+                            <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.confirmar_senha.label(class="form-label") }}
+                        {{ form.confirmar_senha(class="form-control") }}
+                        {% if form.confirmar_senha.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.confirmar_senha.errors %}
+                            <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Alterar Senha</button>
+                        <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

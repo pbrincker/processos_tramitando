@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">{{ 'Editar' if fase else 'Nova' }} Fase</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    <div class="mb-3">
+                        {{ form.codigo.label(class="form-label") }}
+                        {{ form.codigo(class="form-control") }}
+                        {% if form.codigo.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.codigo.errors %}
+                            <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.descricao.label(class="form-label") }}
+                        {{ form.descricao(class="form-control") }}
+                        {% if form.descricao.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.descricao.errors %}
+                            <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.ordem.label(class="form-label") }}
+                        {{ form.ordem(class="form-control", type="number") }}
+                        {% if form.ordem.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.ordem.errors %}
+                            <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.cor.label(class="form-label") }}
+                        {{ form.cor(class="form-select") }}
+                        {% if form.cor.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.cor.errors %}
+                            <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            {{ form.ativo(class="form-check-input") }}
+                            {{ form.ativo.label(class="form-check-label") }}
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('listar_fases') }}" class="btn btn-secondary me-md-2">Cancelar</a>
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

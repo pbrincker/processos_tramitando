@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">{{ 'Editar' if processo else 'Novo' }} Processo</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    <div class="mb-3">
+                        {{ form.objeto.label(class="form-label") }}
+                        {{ form.objeto(class="form-control", rows=3) }}
+                        {% if form.objeto.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.objeto.errors %}
+                            <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.modalidade.label(class="form-label") }}
+                        {{ form.modalidade(class="form-select") }}
+                        {% if form.modalidade.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.modalidade.errors %}
+                            <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.valor_estimado.label(class="form-label") }}
+                        {{ form.valor_estimado(class="form-control", type="number", step="0.01") }}
+                        {% if form.valor_estimado.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.valor_estimado.errors %}
+                            <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.data_recebimento.label(class="form-label") }}
+                        {{ form.data_recebimento(class="form-control", type="date") }}
+                        {% if form.data_recebimento.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.data_recebimento.errors %}
+                            <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.responsavel_id.label(class="form-label") }}
+                        {{ form.responsavel_id(class="form-select") }}
+                        {% if form.responsavel_id.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.responsavel_id.errors %}
+                            <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.observacao.label(class="form-label") }}
+                        {{ form.observacao(class="form-control", rows=2, placeholder="Observações iniciais sobre o processo...") }}
+                        {% if form.observacao.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.observacao.errors %}
+                            <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary me-md-2">Cancelar</a>
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

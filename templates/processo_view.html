@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Detalhes do Processo</h2>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Processo {{ processo.numero_processo }}</h5>
+            <span class="badge bg-{{ {
+                'licitacao_i': 'primary',
+                'licitacao_ii': 'primary',
+                'licitacao_iii': 'primary',
+                'licitacao_iv': 'primary',
+                'procuradoria': 'info',
+                'secretaria': 'info',
+                'recurso': 'warning',
+                'amostra': 'secondary',
+                'impugnacao': 'danger',
+                'pedido_esclarecimento': 'warning'
+            }[processo.status] }}">
+                {{ processo.status|replace('_', ' ')|title }}
+            </span>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h6 class="text-muted">Objeto</h6>
+                <p>{{ processo.objeto }}</p>
+            </div>
+            <div class="col-md-3">
+                <h6 class="text-muted">Modalidade</h6>
+                <p>{{ processo.modalidade|title if processo.modalidade else 'Não definida' }}</p>
+            </div>
+            <div class="col-md-3">
+                <h6 class="text-muted">Valor Estimado</h6>
+                <p>{{ "R$ %.2f"|format(processo.valor_estimado|float) if processo.valor_estimado else 'Não definido' }}</p>
+            </div>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <h6 class="text-muted">Data de Recebimento</h6>
+                <p>{{ processo.data_recebimento.strftime('%d/%m/%Y') if processo.data_recebimento else 'Não definida' }}</p>
+            </div>
+            <div class="col-md-4">
+                <h6 class="text-muted">Responsável</h6>
+                <p>{{ processo.responsavel.username }}</p>
+            </div>
+            <div class="col-md-4">
+                <h6 class="text-muted">Criado em</h6>
+                <p>{{ processo.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
+            </div>
+        </div>
+
+        <h5 class="mb-3">Histórico</h5>
+        <div class="timeline">
+            {% for registro in processo.historico %}
+            <div class="mb-3 pb-3 border-bottom">
+                <div class="d-flex justify-content-between">
+                    <strong>{{ registro.created_at.strftime('%d/%m/%Y %H:%M') }}</strong>
+                    <span class="badge bg-secondary">{{ User.query.get(registro.usuario_id).username }}</span>
+                </div>
+                <div class="mt-2">
+                    {% if registro.status_anterior %}
+                    {% set fase_anterior = ProcessoFase.query.filter_by(codigo=registro.status_anterior).first() %}
+                    {% set fase_nova = ProcessoFase.query.filter_by(codigo=registro.status_novo).first() %}
+                    <p>Status alterado de 
+                        <strong>{{ fase_anterior.descricao if fase_anterior else registro.status_anterior }}</strong> 
+                        para 
+                        <strong>{{ fase_nova.descricao if fase_nova else registro.status_novo }}</strong>
+                    </p>
+                    {% endif %}
+                    {% if registro.observacao %}
+                    <p class="text-muted">{{ registro.observacao }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="card-footer">
+        <div class="d-flex justify-content-between">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                <i data-feather="arrow-left"></i> Voltar
+            </a>
+            <div>
+                <a href="{{ url_for('tramitar_processo', id=processo.id) }}" class="btn btn-info me-2">
+                    <i data-feather="git-branch"></i> Tramitar
+                </a>
+                {% if current_user.is_admin %}
+                <a href="{{ url_for('editar_processo', id=processo.id) }}" class="btn btn-primary">
+                    <i data-feather="edit-2"></i> Editar
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
