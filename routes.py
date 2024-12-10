@@ -318,9 +318,12 @@ def tramitar_processo(id):
         status_anterior = processo.status
         processo.status = form.status.data
         
-        # Converte a data do formulário para datetime, mantendo o horário como início do dia
-        data_registro = datetime.strptime(f"{form.data_registro.data} 00:00:00", '%Y-%m-%d %H:%M:%S')
-        
+        # Se data de registro foi informada, converte para datetime
+        if form.data_registro.data:
+            data_registro = datetime.strptime(f"{form.data_registro.data} 00:00:00", '%Y-%m-%d %H:%M:%S')
+        else:
+            data_registro = datetime.now()
+
         historico = ProcessoHistorico(
             processo_id=processo.id,
             status_anterior=status_anterior,
@@ -328,16 +331,11 @@ def tramitar_processo(id):
             observacao=form.observacao.data,
             usuario_id=current_user.id,
             data_registro=data_registro,
-            created_at=data_registro  # Usa a mesma data do registro
+            created_at=data_registro
         )
 
-        # Se a data de registro foi informada, usa ela. Caso contrário, usa a data atual
-        data_registro = datetime.strptime(f"{form.data_registro.data} 00:00:00", '%Y-%m-%d %H:%M:%S') if form.data_registro.data else datetime.now()
-        historico.data_registro = data_registro
-        historico.created_at = data_registro
-
-        # Se o prazo estiver habilitado e dias de prazo informado, adiciona as informações de prazo
-        if form.habilitar_prazo.data and form.dias_prazo.data:
+        # Só processa informações de prazo se estiver habilitado E dias de prazo informado
+        if form.habilitar_prazo.data and form.dias_prazo.data and form.dias_prazo.data > 0:
             historico.dias_prazo = form.dias_prazo.data
             historico.tipo_prazo = form.tipo_prazo.data
             historico.prazo_inicio = data_registro
