@@ -303,13 +303,28 @@ def editar_processo(id):
 @app.route('/processo/<int:id>/tramitar', methods=['GET', 'POST'])
 @login_required
 def tramitar_processo(id):
+    import logging
     from datetime import datetime, timedelta
+    
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger(__name__)
+    
     processo = Processo.query.get_or_404(id)
     fases_ativas = ProcessoFase.query.filter_by(ativo=True).order_by(ProcessoFase.ordem).all()
     form = TramitacaoForm()
     form.status.choices = [(fase.codigo, fase.descricao) for fase in fases_ativas]
     
-    if form.validate_on_submit():
+    if request.method == 'POST':
+        logger.debug(f"Dados do formulário: {request.form}")
+        
+        if not form.validate():
+            logger.error(f"Erros de validação: {form.errors}")
+            for field, errors in form.errors.items():
+                for error in errors:
+                    flash(f'Erro no campo {getattr(form, field).label.text}: {error}', 'error')
+            return render_template('processo_tramitar.html', form=form, processo=processo)
+        
+        logger.debug("Formulário validado com sucesso")
         status_anterior = processo.status
         processo.status = form.status.data
         
@@ -318,8 +333,10 @@ def tramitar_processo(id):
         if form.data_registro.data:
             try:
                 data_registro = datetime.strptime(form.data_registro.data, '%Y-%m-%d')
-            except (ValueError, TypeError):
-                pass
+                logger.debug(f"Data de registro definida: {data_registro}")
+            except (ValueError, TypeError) as e:
+                logger.warning(f"Erro ao converter data de registro: {e}")
+                flash('Data de registro inválida, usando data atual', 'warning')
 
         # Cria o histórico básico
         historico = ProcessoHistorico(
@@ -332,30 +349,52 @@ def tramitar_processo(id):
             created_at=data_registro
         )
 
-        # Adiciona informações de prazo apenas se habilitado e dias informados
-        if form.habilitar_prazo.data and form.dias_prazo.data:
-            try:
-                dias_prazo = int(form.dias_prazo.data)
-                if dias_prazo > 0:
-                    historico.dias_prazo = dias_prazo
-                    historico.tipo_prazo = form.tipo_prazo.data
-                    historico.prazo_inicio = data_registro
+        # Cria o histórico base
+        historico = ProcessoHistorico(
+            processo_id=processo.id,
+            status_anterior=status_anterior,
+            status_novo=processo.status,
+            observacao=form.observacao.data,
+            usuario_id=current_user.id,
+            data_registro=data_registro,
+            created_at=data_registro
+        )
+        logger.debug(f"Histórico base criado: {historico.__dict__}")
 
-                    # Calcula data fim baseado no tipo de prazo
-                    if form.tipo_prazo.data == 'util':
-                        dias_contados = 0
-                        data_prazo = historico.prazo_inicio
-                        while dias_contados < dias_prazo:
-                            data_prazo += timedelta(days=1)
-                            if data_prazo.weekday() < 5:  # Não é sábado nem domingo
-                                dias_contados += 1
-                        historico.prazo_fim = data_prazo
+        # Adiciona informações de prazo apenas se habilitado
+        if form.habilitar_prazo.data:
+            try:
+                if form.dias_prazo.data:
+                    dias_prazo = int(form.dias_prazo.data)
+                    if dias_prazo > 0:
+                        historico.dias_prazo = dias_prazo
+                        historico.tipo_prazo = form.tipo_prazo.data
+                        historico.prazo_inicio = data_registro
+
+                        # Calcula data fim baseado no tipo de prazo
+                        if form.tipo_prazo.data == 'util':
+                            dias_contados = 0
+                            data_prazo = historico.prazo_inicio
+                            while dias_contados < dias_prazo:
+                                data_prazo += timedelta(days=1)
+                                if data_prazo.weekday() < 5:  # Não é sábado nem domingo
+                                    dias_contados += 1
+                            historico.prazo_fim = data_prazo
+                        else:
+                            historico.prazo_fim = historico.prazo_inicio + timedelta(days=dias_prazo)
+                        logger.debug(f"Prazo configurado: início={historico.prazo_inicio}, fim={historico.prazo_fim}")
                     else:
-                        historico.prazo_fim = historico.prazo_inicio + timedelta(days=dias_prazo)
-            except (ValueError, TypeError):
-                pass  # Ignora erros de conversão e continua sem prazo
+                        logger.warning("Dias de prazo inválido (deve ser maior que 0)")
+                        flash('Número de dias deve ser maior que zero', 'warning')
+                else:
+                    logger.warning("Prazo habilitado mas dias não informados")
+                    flash('Informe o número de dias quando habilitar o prazo', 'warning')
+            except (ValueError, TypeError) as e:
+                logger.error(f"Erro ao processar prazo: {e}")
+                flash('Erro ao processar o prazo', 'error')
         
         try:
+            logger.debug("Iniciando salvamento das alterações")
             # Salva o histórico
             db.session.add(historico)
             
@@ -369,17 +408,22 @@ def tramitar_processo(id):
                     remetente_id=current_user.id
                 )
                 db.session.add(notificacao)
+                logger.debug("Notificação criada para o responsável")
             
             # Commit das alterações
             db.session.commit()
-            flash('Processo tramitado com sucesso!')
+            logger.info("Processo tramitado com sucesso")
+            flash('Processo tramitado com sucesso!', 'success')
             return redirect(url_for('dashboard'))
             
         except Exception as e:
             db.session.rollback()
-            flash('Erro ao tramitar processo. Por favor, tente novamente.')
-            print(f"Erro ao tramitar processo: {str(e)}")
+            logger.error(f"Erro ao tramitar processo: {str(e)}")
+            flash('Erro ao tramitar processo: ' + str(e), 'error')
+            return render_template('processo_tramitar.html', form=form, processo=processo)
     
+    # GET request
+    logger.debug("Exibindo formulário de tramitação")
     return render_template('processo_tramitar.html', form=form, processo=processo)
 
 @app.route('/admin/fases')
