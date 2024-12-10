@@ -92,7 +92,7 @@
                                 <span class="badge bg-{{ fase.cor if fase else 'secondary' }}">
                                     {{ fase.descricao if fase else processo.status|replace('_', ' ')|title }}
                                 </span>
-                                {% if processo.status == 'procuradoria' and ultimo_historico %}
+                                {% if ultimo_historico and ultimo_historico.prazo_fim %}
                                     {% if ultimo_historico.prazo_status == 'no_prazo' %}
                                         <span class="badge bg-success" data-bs-toggle="tooltip" 
                                               title="No prazo - Vence em {{ ultimo_historico.prazo_fim.strftime('%d/%m/%Y') }}">

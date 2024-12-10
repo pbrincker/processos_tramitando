@@ -55,7 +55,9 @@ class ProcessoHistorico(db.Model):
     def prazo_status(self):
         if not self.prazo_fim:
             return None
-        return 'no_prazo' if datetime.utcnow() <= self.prazo_fim else 'vencido'
+        # Considera vencido apenas após o dia do vencimento
+        data_fim = self.prazo_fim.replace(hour=23, minute=59, second=59)
+        return 'no_prazo' if datetime.utcnow() <= data_fim else 'vencido'
 
 class ProcessoFase(db.Model):
     id = db.Column(db.Integer, primary_key=True)
