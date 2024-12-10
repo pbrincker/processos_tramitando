@@ -1,3 +1,9 @@
+/* Transições suaves para mudança de tema */
+* {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Estilos base */
 .badge {
     font-size: 0.9em;
     padding: 0.5em 0.7em;
@@ -20,4 +26,40 @@
 .btn-sm .feather {
     width: 14px;
     height: 14px;
+}
+
+/* Estilo do botão de tema */
+#themeToggle {
+    width: 38px;
+    height: 38px;
+    padding: 0.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    margin-left: 1rem;
+}
+
+#themeToggle:hover {
+    transform: scale(1.1);
+}
+
+/* Ajustes específicos para tema escuro */
+[data-bs-theme="dark"] .card {
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-bs-theme="dark"] .table {
+    --bs-table-hover-bg: rgba(255, 255, 255, 0.05);
+}
+
+/* Melhorias visuais gerais */
+.card {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
