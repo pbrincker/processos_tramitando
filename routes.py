@@ -135,10 +135,22 @@ def toggle_status_usuario(id):
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    if current_user.is_admin:
-        processos = Processo.query.all()
-    else:
-        processos = Processo.query.filter_by(responsavel_id=current_user.id).all()
+    query = Processo.query
+
+    # Filtros básicos
+    if not current_user.is_admin:
+        query = query.filter_by(responsavel_id=current_user.id)
+    
+    # Aplica filtros da URL
+    if objeto := request.args.get('objeto'):
+        query = query.filter(Processo.objeto.ilike(f'%{objeto}%'))
+    if status := request.args.get('status'):
+        query = query.filter_by(status=status)
+    if responsavel := request.args.get('responsavel'):
+        query = query.filter_by(responsavel_id=int(responsavel))
+    
+    # Executa a consulta
+    processos = query.all()
     
     # Métricas
     import logging
@@ -170,6 +182,7 @@ def dashboard():
     return render_template('dashboard.html',
                          processos=processos,
                          ProcessoFase=ProcessoFase,
+                         User=User,
                          total_processos=total_processos,
                          processos_por_status=processos_por_status,
                          processos_por_modalidade=processos_por_modalidade,

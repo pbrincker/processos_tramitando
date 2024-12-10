@@ -14,43 +14,54 @@
     {% endif %}
 </div>
 
-<!-- Cards de Métricas -->
+<!-- Botão para alternar visualização -->
 <div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card">
-            <div class="card-body">
-                <h6 class="card-subtitle mb-2 text-muted">Total de Processos</h6>
-                <p class="h3 mb-0">{{ total_processos }}</p>
+    <div class="col">
+        <button type="button" class="btn btn-outline-secondary" id="toggleDashboard">
+            <i data-feather="eye"></i> <span>Ocultar Dashboard</span>
+        </button>
+    </div>
+</div>
+
+<!-- Cards de Métricas e Gráficos -->
+<div id="dashboardContent">
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Total de Processos</h6>
+                    <p class="h3 mb-0">{{ total_processos }}</p>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card">
-            <div class="card-body">
-                <h6 class="card-subtitle mb-2 text-muted">Valor Total</h6>
-                <p class="h3 mb-0">R$ {{ "%.2f"|format(valor_total) }}</p>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Valor Total</h6>
+                    <p class="h3 mb-0">R$ {{ "%.2f"|format(valor_total) }}</p>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h6 class="card-subtitle mb-2 text-muted">Distribuição por Status</h6>
-                <div style="height: 160px;">
-                    <canvas id="statusChart"></canvas>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Distribuição por Status</h6>
+                    <div style="height: 160px;">
+                        <canvas id="statusChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<div class="row mb-4">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h6 class="card-subtitle mb-2 text-muted">Distribuição por Modalidade</h6>
-                <div style="height: 160px;">
-                    <canvas id="modalidadeChart"></canvas>
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Distribuição por Modalidade</h6>
+                    <div style="height: 160px;">
+                        <canvas id="modalidadeChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -63,6 +74,39 @@
         <h5 class="card-title mb-0">Processos Recentes</h5>
     </div>
     <div class="card-body">
+        <!-- Filtros -->
+        <form class="row g-3 mb-4" id="filterForm">
+            <div class="col-md-4">
+                <label class="form-label">Objeto</label>
+                <input type="text" class="form-control" name="objeto" placeholder="Buscar por objeto...">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Status</label>
+                <select class="form-select" name="status">
+                    <option value="">Todos</option>
+                    {% for fase in ProcessoFase.query.filter_by(ativo=True).order_by(ProcessoFase.ordem).all() %}
+                    <option value="{{ fase.codigo }}">{{ fase.descricao }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Responsável</label>
+                <select class="form-select" name="responsavel">
+                    <option value="">Todos</option>
+                    {% for user in User.query.filter_by(is_active=True).order_by(User.username).all() %}
+                    <option value="{{ user.id }}">{{ user.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i data-feather="filter"></i> Filtrar
+                </button>
+                <button type="button" class="btn btn-secondary" id="clearFilters">
+                    <i data-feather="x"></i> Limpar Filtros
+                </button>
+            </div>
+        </form>
         <div class="table-responsive">
             <table class="table table-hover">
                 <thead>
@@ -213,6 +257,49 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         }
+    });
+// Controle de visibilidade do dashboard
+    const toggleBtn = document.getElementById('toggleDashboard');
+    const dashboardContent = document.getElementById('dashboardContent');
+    const toggleIcon = toggleBtn.querySelector('i');
+    const toggleText = toggleBtn.querySelector('span');
+    
+    // Carrega o estado salvo
+    const isDashboardVisible = localStorage.getItem('dashboardVisible') !== 'false';
+    dashboardContent.style.display = isDashboardVisible ? 'block' : 'none';
+    updateToggleButton(!isDashboardVisible);
+    
+    toggleBtn.addEventListener('click', function() {
+        const isVisible = dashboardContent.style.display !== 'none';
+        dashboardContent.style.display = isVisible ? 'none' : 'block';
+        localStorage.setItem('dashboardVisible', !isVisible);
+        updateToggleButton(isVisible);
+    });
+    
+    function updateToggleButton(isHidden) {
+        toggleIcon.setAttribute('data-feather', isHidden ? 'eye' : 'eye-off');
+        toggleText.textContent = isHidden ? 'Mostrar Dashboard' : 'Ocultar Dashboard';
+        feather.replace();
+    }
+
+    // Controle dos filtros
+    const filterForm = document.getElementById('filterForm');
+    const clearFiltersBtn = document.getElementById('clearFilters');
+    
+    // Restaura valores dos filtros da URL
+    const urlParams = new URLSearchParams(window.location.search);
+    for (const [key, value] of urlParams) {
+        const input = filterForm.elements[key];
+        if (input) {
+            input.value = value;
+        }
+    }
+    
+    // Limpa os filtros
+    clearFiltersBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        filterForm.reset();
+        window.location.href = window.location.pathname;
     });
 });
 </script>
