@@ -415,3 +415,78 @@ def marcar_notificacao_lida(id):
     notificacao.lida = True
     db.session.commit()
     return redirect(url_for('listar_notificacoes'))
+
+@app.route('/exportar_processos')
+@login_required
+def exportar_processos():
+    from openpyxl import Workbook
+    from io import BytesIO
+    from flask import send_file
+    
+    # Usar os mesmos filtros da listagem
+    query = Processo.query
+    
+    if numero_processo := request.args.get('numero_processo'):
+        query = query.filter(Processo.numero_processo.ilike(f'%{numero_processo}%'))
+    if modalidade := request.args.get('modalidade'):
+        query = query.filter(Processo.modalidade == modalidade)
+    if status := request.args.get('status'):
+        query = query.filter(Processo.status == status)
+    if data_inicio := request.args.get('data_inicio'):
+        query = query.filter(Processo.data_abertura >= datetime.strptime(data_inicio, '%Y-%m-%d'))
+    if data_fim := request.args.get('data_fim'):
+        query = query.filter(Processo.data_abertura <= datetime.strptime(data_fim, '%Y-%m-%d'))
+    
+    processos = query.all()
+    
+    # Criar arquivo Excel
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Processos"
+    
+    # Cabeçalhos
+    headers = [
+        'Número do Processo', 'Objeto', 'Modalidade', 'Status',
+        'Valor Estimado', 'Data Recebimento', 'Responsável',
+        'Data Criação', 'Última Atualização'
+    ]
+    ws.append(headers)
+    
+    # Dados
+    for processo in processos:
+        ws.append([
+            processo.numero_processo,
+            processo.objeto,
+            processo.modalidade,
+            processo.status,
+            float(processo.valor_estimado) if processo.valor_estimado else 0,
+            processo.data_recebimento.strftime('%d/%m/%Y') if processo.data_recebimento else '',
+            processo.responsavel.username,
+            processo.created_at.strftime('%d/%m/%Y %H:%M'),
+            processo.updated_at.strftime('%d/%m/%Y %H:%M') if processo.updated_at else ''
+        ])
+    
+    # Ajustar largura das colunas
+    for column in ws.columns:
+        max_length = 0
+        column = list(column)
+        for cell in column:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        adjusted_width = (max_length + 2)
+        ws.column_dimensions[column[0].column_letter].width = adjusted_width
+    
+    # Salvar em buffer e retornar
+    excel_file = BytesIO()
+    wb.save(excel_file)
+    excel_file.seek(0)
+    
+    return send_file(
+        excel_file,
+        download_name='processos.xlsx',
+        as_attachment=True,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )

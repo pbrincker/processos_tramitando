@@ -50,6 +50,9 @@
                 <a href="{{ url_for('lista_processos') }}" class="btn btn-secondary">
                     <i data-feather="x"></i> Limpar Filtros
                 </a>
+                <a href="{{ url_for('exportar_processos') }}{{ '?' + request.query_string.decode() if request.query_string else '' }}" class="btn btn-success">
+                    <i data-feather="download"></i> Exportar para Excel
+                </a>
             </div>
         </form>
     </div>
