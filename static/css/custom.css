@@ -1,6 +1,29 @@
 /* Transições suaves para mudança de tema */
-* {
-    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+:root {
+    --transition-duration: 0.3s;
+    --transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Transições globais */
+*, 
+*::before, 
+*::after {
+    transition: background-color var(--transition-duration) var(--transition-timing),
+                color var(--transition-duration) var(--transition-timing),
+                border-color var(--transition-duration) var(--transition-timing),
+                box-shadow var(--transition-duration) var(--transition-timing),
+                opacity var(--transition-duration) var(--transition-timing);
+}
+
+/* Otimização de performance para elementos específicos */
+.navbar,
+.card,
+.btn,
+.form-control,
+.badge,
+.alert,
+.table {
+    will-change: background-color, color, border-color;
 }
 
 /* Estilos base */
@@ -57,9 +80,48 @@
 /* Melhorias visuais gerais */
 .card {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    transition: box-shadow 0.3s ease;
+    transition: all var(--transition-duration) var(--transition-timing);
 }
 
 .card:hover {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+/* Transições específicas para componentes */
+.btn {
+    transition: all var(--transition-duration) var(--transition-timing);
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+.form-control,
+.form-select {
+    transition: border-color var(--transition-duration) var(--transition-timing),
+                box-shadow var(--transition-duration) var(--transition-timing);
+}
+
+.badge {
+    transition: all var(--transition-duration) var(--transition-timing);
+}
+
+/* Ajustes para tema escuro com transições */
+[data-bs-theme="dark"] {
+    --shadow-color: rgba(0, 0, 0, 0.2);
+    --hover-shadow-color: rgba(0, 0, 0, 0.3);
+}
+
+[data-bs-theme="light"] {
+    --shadow-color: rgba(0, 0, 0, 0.05);
+    --hover-shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+.card {
+    box-shadow: 0 2px 4px var(--shadow-color);
+}
+
+.card:hover {
+    box-shadow: 0 4px 8px var(--hover-shadow-color);
 }
