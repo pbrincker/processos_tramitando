@@ -48,6 +48,19 @@ class TramitacaoForm(FlaskForm):
         choices=[('util', 'Dias Úteis'), ('corrido', 'Dias Corridos')],
         default='util',
         validators=[])
+    
+    def validate(self):
+        if not super().validate():
+            return False
+        
+        if self.habilitar_prazo.data:
+            if not self.dias_prazo.data:
+                self.dias_prazo.errors.append('Informe o número de dias quando habilitar o prazo')
+                return False
+            if self.dias_prazo.data <= 0:
+                self.dias_prazo.errors.append('O número de dias deve ser maior que zero')
+                return False
+        return True
 
 class ProcessoFaseForm(FlaskForm):
     codigo = StringField('Código', validators=[DataRequired(), Length(max=50)])

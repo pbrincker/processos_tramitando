@@ -362,36 +362,25 @@ def tramitar_processo(id):
         logger.debug(f"Histórico base criado: {historico.__dict__}")
 
         # Adiciona informações de prazo apenas se habilitado
+        # Processa prazo apenas se estiver habilitado (a validação já garantiu que os dados estão corretos)
         if form.habilitar_prazo.data:
-            try:
-                if form.dias_prazo.data:
-                    dias_prazo = int(form.dias_prazo.data)
-                    if dias_prazo > 0:
-                        historico.dias_prazo = dias_prazo
-                        historico.tipo_prazo = form.tipo_prazo.data
-                        historico.prazo_inicio = data_registro
+            historico.dias_prazo = form.dias_prazo.data
+            historico.tipo_prazo = form.tipo_prazo.data
+            historico.prazo_inicio = data_registro
 
-                        # Calcula data fim baseado no tipo de prazo
-                        if form.tipo_prazo.data == 'util':
-                            dias_contados = 0
-                            data_prazo = historico.prazo_inicio
-                            while dias_contados < dias_prazo:
-                                data_prazo += timedelta(days=1)
-                                if data_prazo.weekday() < 5:  # Não é sábado nem domingo
-                                    dias_contados += 1
-                            historico.prazo_fim = data_prazo
-                        else:
-                            historico.prazo_fim = historico.prazo_inicio + timedelta(days=dias_prazo)
-                        logger.debug(f"Prazo configurado: início={historico.prazo_inicio}, fim={historico.prazo_fim}")
-                    else:
-                        logger.warning("Dias de prazo inválido (deve ser maior que 0)")
-                        flash('Número de dias deve ser maior que zero', 'warning')
-                else:
-                    logger.warning("Prazo habilitado mas dias não informados")
-                    flash('Informe o número de dias quando habilitar o prazo', 'warning')
-            except (ValueError, TypeError) as e:
-                logger.error(f"Erro ao processar prazo: {e}")
-                flash('Erro ao processar o prazo', 'error')
+            # Calcula data fim baseado no tipo de prazo
+            if form.tipo_prazo.data == 'util':
+                dias_contados = 0
+                data_prazo = historico.prazo_inicio
+                while dias_contados < historico.dias_prazo:
+                    data_prazo += timedelta(days=1)
+                    if data_prazo.weekday() < 5:  # Não é sábado nem domingo
+                        dias_contados += 1
+                historico.prazo_fim = data_prazo
+            else:
+                historico.prazo_fim = historico.prazo_inicio + timedelta(days=historico.dias_prazo)
+            
+            logger.debug(f"Prazo configurado: início={historico.prazo_inicio}, fim={historico.prazo_fim}")
         
         try:
             logger.debug("Iniciando salvamento das alterações")
