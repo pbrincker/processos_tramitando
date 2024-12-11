@@ -4,7 +4,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 from sqlalchemy import func
 from main import app, db, login_manager
 from models import User, Processo, ProcessoHistorico, ProcessoFase, NotificacaoProcesso, Contrato
-from forms import LoginForm, UserForm, ProcessoForm, TramitacaoForm, AlterarSenhaForm, ProcessoFaseForm, PublicacaoForm
+from forms import LoginForm, UserForm, ProcessoForm, TramitacaoForm, AlterarSenhaForm, ProcessoFaseForm, PublicacaoForm, ContratoForm
 import logging
 from openpyxl import Workbook
 from io import BytesIO
