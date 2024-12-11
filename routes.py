@@ -634,3 +634,115 @@ def exportar_processos():
         as_attachment=True,
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
+
+@app.route('/relatorio/processos-publicados', methods=['GET'])
+@login_required
+def relatorio_processos_publicados():
+    # Obter datas do período do request
+    data_inicio = request.args.get('data_inicio')
+    data_fim = request.args.get('data_fim')
+    
+    # Query base
+    query = Processo.query.filter(Processo.publicado == True)
+    
+    # Aplicar filtros de data se fornecidos
+    if data_inicio:
+        try:
+            data_inicio = datetime.strptime(data_inicio, '%Y-%m-%d').date()
+            query = query.filter(Processo.data_publicacao >= data_inicio)
+        except ValueError:
+            flash('Data inicial inválida', 'error')
+    
+    if data_fim:
+        try:
+            data_fim = datetime.strptime(data_fim, '%Y-%m-%d').date()
+            query = query.filter(Processo.data_publicacao <= data_fim)
+        except ValueError:
+            flash('Data final inválida', 'error')
+    
+    # Aplicar filtros de permissão
+    if not current_user.is_admin:
+        if not current_user.can_view_all_processes or \
+           (current_user.can_view_all_processes and not current_user.view_all_processes):
+            query = query.filter_by(responsavel_id=current_user.id)
+    
+    # Ordenar por data de publicação
+    processos = query.order_by(Processo.data_publicacao.desc()).all()
+    
+    # Calcular totais
+    total_processos = len(processos)
+    total_por_modalidade = {}
+    
+    for processo in processos:
+        modalidade = processo.modalidade.replace('_', ' ').title()
+        if 'Pregao' in modalidade:
+            modalidade = modalidade.replace('Pregao', 'Pregão')
+        
+        total_por_modalidade[modalidade] = total_por_modalidade.get(modalidade, 0) + 1
+    
+    # Se solicitado exportação
+    if request.args.get('export') == 'excel':
+        return exportar_relatorio_publicados(processos)
+    
+    return render_template('relatorio_publicados.html',
+                         processos=processos,
+                         total_processos=total_processos,
+                         total_por_modalidade=total_por_modalidade,
+                         data_inicio=data_inicio,
+                         data_fim=data_fim)
+
+def exportar_relatorio_publicados(processos):
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Relatório de Publicações"
+    
+    # Cabeçalhos
+    headers = [
+        'Número Publicação',
+        'Modalidade',
+        'Objeto',
+        'Data Publicação',
+        'Data Sessão',
+        'Link Publicação'
+    ]
+    ws.append(headers)
+    
+    # Dados
+    for processo in processos:
+        modalidade = processo.modalidade.replace('_', ' ').title()
+        if 'Pregao' in modalidade:
+            modalidade = modalidade.replace('Pregao', 'Pregão')
+            
+        ws.append([
+            processo.numero_publicacao,
+            modalidade,
+            processo.objeto,
+            processo.data_publicacao.strftime('%d/%m/%Y'),
+            processo.data_sessao.strftime('%d/%m/%Y'),
+            processo.link_publicacao or ''
+        ])
+    
+    # Ajustar largura das colunas
+    for column in ws.columns:
+        max_length = 0
+        column = list(column)
+        for cell in column:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        adjusted_width = (max_length + 2)
+        ws.column_dimensions[column[0].column_letter].width = adjusted_width
+    
+    # Salvar em buffer e retornar
+    excel_file = BytesIO()
+    wb.save(excel_file)
+    excel_file.seek(0)
+    
+    return send_file(
+        excel_file,
+        download_name=f'relatorio_publicacoes_{datetime.now().strftime("%Y%m%d")}.xlsx',
+        as_attachment=True,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )

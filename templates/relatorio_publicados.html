@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Relatório de Processos Publicados</h2>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Data Inicial</label>
+                <input type="date" class="form-control" name="data_inicio" value="{{ request.args.get('data_inicio', '') }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Data Final</label>
+                <input type="date" class="form-control" name="data_fim" value="{{ request.args.get('data_fim', '') }}">
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <div class="btn-group w-100">
+                    <button type="submit" class="btn btn-primary">
+                        <i data-feather="filter"></i> Filtrar
+                    </button>
+                    <a href="{{ url_for('relatorio_processos_publicados') }}" class="btn btn-secondary">
+                        <i data-feather="x"></i> Limpar
+                    </a>
+                    <a href="{{ url_for('relatorio_processos_publicados', export='excel', data_inicio=request.args.get('data_inicio', ''), data_fim=request.args.get('data_fim', '')) }}" class="btn btn-success">
+                        <i data-feather="download"></i> Exportar Excel
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Total de Processos</h5>
+                <h2 class="mb-0">{{ total_processos }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Total por Modalidade</h5>
+                <div class="row">
+                    {% for modalidade, total in total_por_modalidade.items() %}
+                    <div class="col-md-4 mb-2">
+                        <div class="d-flex justify-content-between">
+                            <span>{{ modalidade }}</span>
+                            <strong>{{ total }}</strong>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Modalidade</th>
+                        <th>Número Publicação</th>
+                        <th>Data Publicação</th>
+                        <th>Data Sessão</th>
+                        <th>Objeto</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for processo in processos %}
+                    <tr>
+                        <td>{{ processo.modalidade.replace('_', ' ').title().replace('Pregao', 'Pregão') }}</td>
+                        <td>{{ processo.numero_publicacao }}</td>
+                        <td>{{ processo.data_publicacao.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ processo.data_sessao.strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            <div class="text-truncate" style="max-width: 300px;" data-bs-toggle="tooltip" title="{{ processo.objeto }}">
+                                {{ processo.objeto }}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="{{ url_for('visualizar_processo', id=processo.id) }}" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="Visualizar">
+                                    <i data-feather="eye"></i>
+                                </a>
+                                {% if processo.link_publicacao %}
+                                <a href="{{ processo.link_publicacao }}" target="_blank" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="Acessar Publicação Oficial">
+                                    <i data-feather="external-link"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if not processos %}
+        <div class="text-center py-4">
+            <i data-feather="inbox" class="text-muted mb-2" style="width: 48px; height: 48px;"></i>
+            <p class="text-muted">Nenhum processo publicado encontrado no período selecionado.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
