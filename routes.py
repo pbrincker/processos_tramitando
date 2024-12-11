@@ -851,9 +851,18 @@ def editar_contrato(id):
             contrato.objeto = form.objeto.data
             contrato.processo_id = form.processo_id.data
             contrato.fornecedor = form.fornecedor.data
-            contrato.valor = form.valor.data
-            contrato.data_assinatura = datetime.strptime(form.data_assinatura.data, '%Y-%m-%d').date()
-            contrato.data_vigencia = datetime.strptime(form.data_vigencia.data, '%Y-%m-%d').date()
+            contrato.valor = form.valor.data if form.valor.data else None
+            
+            if form.data_assinatura.data:
+                contrato.data_assinatura = datetime.strptime(form.data_assinatura.data, '%Y-%m-%d').date()
+            else:
+                contrato.data_assinatura = None
+                
+            if form.data_vigencia.data:
+                contrato.data_vigencia = datetime.strptime(form.data_vigencia.data, '%Y-%m-%d').date()
+            else:
+                contrato.data_vigencia = None
+                
             contrato.responsavel_id = form.responsavel_id.data
 
             db.session.commit()
