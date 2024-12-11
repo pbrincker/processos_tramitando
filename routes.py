@@ -142,8 +142,8 @@ def dashboard():
     # Filtros básicos
     # Se não for admin, verifica as permissões
     if not current_user.is_admin:
-        # Se não tem permissão para ver todos OU tem permissão mas optou por ver apenas os próprios
-        if not current_user.can_view_all_processes or not current_user.view_all_processes:
+        # Se não tem permissão para ver todos OU tem permissão e optou por ver apenas os próprios
+        if not current_user.can_view_all_processes or (current_user.can_view_all_processes and not current_user.view_all_processes):
             query = query.filter_by(responsavel_id=current_user.id)
     
     # Aplica filtros da URL
