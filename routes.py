@@ -133,6 +133,9 @@ def toggle_status_usuario(id):
 @app.route('/dashboard')
 @login_required
 def dashboard():
+    # Captura o número de processos por página e a página atual da query string
+    per_page = int(request.args.get('per_page', 20))
+    page = int(request.args.get('page', 1))
     query = Processo.query
     
     # Filtros de permissão
@@ -150,16 +153,19 @@ def dashboard():
         responsavel_ids = [int(r) for r in responsavel_list]
         query = query.filter(Processo.responsavel_id.in_(responsavel_ids))
     
-    # Ordenação por data de criação decrescente
-    processos = query.order_by(Processo.created_at.desc()).all()
+    # Total de processos
+    total_processos = query.count()
     
+    # Paginando os resultados
+    processos = query.order_by(Processo.created_at.desc()).paginate(page=page, per_page=per_page, error_out=False)
+
     # Métricas
-    total_processos = len(processos)
+    # total_processos = len(processos)
     processos_por_status = {}
     processos_por_modalidade = {}
     valor_total = 0
     
-    for processo in processos:
+    for processo in query.all():
         # Contagem por status
         status = processo.status
         fase = ProcessoFase.query.filter_by(codigo=status).first()
@@ -175,13 +181,16 @@ def dashboard():
             valor_total += float(processo.valor_estimado)
     
     return render_template('dashboard.html',
-                         processos=processos,
-                         ProcessoFase=ProcessoFase,
-                         User=User,
-                         total_processos=total_processos,
-                         processos_por_status=processos_por_status,
-                         processos_por_modalidade=processos_por_modalidade,
-                         valor_total=valor_total)
+          processos=processos.items,  # passa apenas os itens da página atual
+          total_processos=total_processos,
+          per_page=per_page,
+          current_page=processos.page,
+          total_pages=processos.pages,
+          processos_por_status=processos_por_status,
+          ProcessoFase=ProcessoFase,
+          User=User,
+          processos_por_modalidade=processos_por_modalidade,
+          valor_total=valor_total)
 
 # Gerenciamento de Processos
 @app.route('/processo/novo', methods=['GET', 'POST'])
@@ -692,6 +701,88 @@ def relatorio_processos_publicados():
                          data_fim=data_fim)
 
 def exportar_relatorio_publicados(processos):
+
+# Rotas de Contratos
+@app.route('/contratos/novo', methods=['GET', 'POST'])
+@login_required
+def novo_contrato():
+    if not current_user.is_admin:
+        flash('Acesso não autorizado')
+        return redirect(url_for('index'))
+        
+    form = ContratoForm()
+    
+    # Carregar processos para o select
+    processos = Processo.query.filter_by(publicado=True).all()
+    form.processo_id.choices = [(p.id, p.numero_processo) for p in processos]
+    
+    # Carregar usuários para o select
+    usuarios = User.query.filter_by(is_active=True).all()
+    form.responsavel_id.choices = [(u.id, u.username) for u in usuarios]
+    
+    if form.validate_on_submit():
+        try:
+            contrato = Contrato(
+                numero=form.numero.data,
+                objeto=form.objeto.data,
+                processo_id=form.processo_id.data,
+                fornecedor=form.fornecedor.data,
+                valor=form.valor.data,
+                data_assinatura=datetime.strptime(form.data_assinatura.data, '%Y-%m-%d').date(),
+                data_vigencia=datetime.strptime(form.data_vigencia.data, '%Y-%m-%d').date(),
+                responsavel_id=form.responsavel_id.data,
+                status='vigente'
+            )
+            
+            db.session.add(contrato)
+            db.session.commit()
+            flash('Contrato cadastrado com sucesso!')
+            return redirect(url_for('dashboard_contratos'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash('Erro ao cadastrar contrato: ' + str(e))
+            
+    return render_template('contrato_form.html', form=form)
+
+@app.route('/contratos/<int:id>/editar', methods=['GET', 'POST'])
+@login_required
+def editar_contrato(id):
+    if not current_user.is_admin:
+        flash('Acesso não autorizado')
+        return redirect(url_for('index'))
+        
+    contrato = Contrato.query.get_or_404(id)
+    form = ContratoForm(obj=contrato)
+    
+    # Carregar processos para o select
+    processos = Processo.query.filter_by(publicado=True).all()
+    form.processo_id.choices = [(p.id, p.numero_processo) for p in processos]
+    
+    # Carregar usuários para o select
+    usuarios = User.query.filter_by(is_active=True).all()
+    form.responsavel_id.choices = [(u.id, u.username) for u in usuarios]
+    
+    if form.validate_on_submit():
+        try:
+            contrato.numero = form.numero.data
+            contrato.objeto = form.objeto.data
+            contrato.processo_id = form.processo_id.data
+            contrato.fornecedor = form.fornecedor.data
+            contrato.valor = form.valor.data
+            contrato.data_assinatura = datetime.strptime(form.data_assinatura.data, '%Y-%m-%d').date()
+            contrato.data_vigencia = datetime.strptime(form.data_vigencia.data, '%Y-%m-%d').date()
+            contrato.responsavel_id = form.responsavel_id.data
+            
+            db.session.commit()
+            flash('Contrato atualizado com sucesso!')
+            return redirect(url_for('dashboard_contratos'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash('Erro ao atualizar contrato: ' + str(e))
+            
+    return render_template('contrato_form.html', form=form, contrato=contrato)
     wb = Workbook()
     ws = wb.active
     ws.title = "Relatório de Publicações"

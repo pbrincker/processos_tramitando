@@ -113,3 +113,13 @@ class PublicacaoForm(FlaskForm):
         
         # Atualiza o valor do campo
         field.data = numero
+        
+class ContratoForm(FlaskForm):
+    numero = StringField('Número', validators=[DataRequired(), Length(max=50)])
+    objeto = TextAreaField('Objeto', validators=[DataRequired()])
+    processo_id = SelectField('Processo', coerce=int, validators=[DataRequired()])
+    fornecedor = StringField('Fornecedor', validators=[DataRequired(), Length(max=200)])
+    valor = StringField('Valor', validators=[DataRequired()])
+    data_assinatura = StringField('Data de Assinatura', validators=[DataRequired()])
+    data_vigencia = StringField('Data de Vigência', validators=[DataRequired()])
+    responsavel_id = SelectField('Responsável', coerce=int, validators=[DataRequired()])
