@@ -59,7 +59,7 @@
                                     <i data-feather="key"></i> Alterar Senha
                                 </a>
                             </li>
-                            {% if current_user.can_view_all_processes %}
+                            {% if not current_user.is_admin and current_user.can_view_all_processes %}
                             <li>
                                 <a class="dropdown-item" href="{{ url_for('toggle_view_all_processes') }}">
                                     <i data-feather="eye{% if not current_user.view_all_processes %}-off{% endif %}"></i>
