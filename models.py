@@ -92,8 +92,8 @@ class NotificacaoProcesso(db.Model):
 
 class Contrato(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    numero = db.Column(db.String(50), unique=True, nullable=False)
-    objeto = db.Column(db.Text, nullable=False)
+    numero = db.Column(db.String(50), unique=True)
+    objeto = db.Column(db.Text)
     processo_id = db.Column(db.Integer, db.ForeignKey('processo.id'), nullable=False)
     fornecedor = db.Column(db.String(200), nullable=False)
     valor = db.Column(db.Numeric(15, 2), nullable=True)
