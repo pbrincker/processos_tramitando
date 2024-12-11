@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from flask_login import login_user, logout_user, login_required, current_user
 from main import app, db, login_manager
 from models import User, Processo, ProcessoHistorico, ProcessoFase, NotificacaoProcesso
-from forms import LoginForm, UserForm, ProcessoForm, TramitacaoForm, AlterarSenhaForm, ProcessoFaseForm
+from forms import LoginForm, UserForm, ProcessoForm, TramitacaoForm, AlterarSenhaForm, ProcessoFaseForm, PublicacaoForm
 
 @login_manager.user_loader
 def load_user(id):
