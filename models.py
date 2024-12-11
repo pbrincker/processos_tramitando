@@ -89,3 +89,20 @@ class NotificacaoProcesso(db.Model):
     processo = db.relationship('Processo', backref='notificacoes')
     destinatario = db.relationship('User', foreign_keys=[destinatario_id], backref='notificacoes_recebidas')
     remetente = db.relationship('User', foreign_keys=[remetente_id], backref='notificacoes_enviadas')
+
+class Contrato(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    numero = db.Column(db.String(50), unique=True, nullable=False)
+    objeto = db.Column(db.Text, nullable=False)
+    processo_id = db.Column(db.Integer, db.ForeignKey('processo.id'), nullable=False)
+    fornecedor = db.Column(db.String(200), nullable=False)
+    valor = db.Column(db.Numeric(15, 2), nullable=False)
+    data_assinatura = db.Column(db.Date, nullable=False)
+    data_vigencia = db.Column(db.Date, nullable=False)
+    status = db.Column(db.String(50), nullable=False, default='vigente')
+    responsavel_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    processo = db.relationship('Processo', backref='contratos')
+    responsavel = db.relationship('User', backref='contratos_responsavel')
