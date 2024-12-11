@@ -51,6 +51,12 @@
                             {{ form.is_admin.label(class="form-check-label") }}
                         </div>
                     </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            {{ form.can_view_all_processes(class="form-check-input") }}
+                            {{ form.can_view_all_processes.label(class="form-check-label") }}
+                        </div>
+                    </div>
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                         <a href="{{ url_for('listar_usuarios') }}" class="btn btn-secondary">Cancelar</a>
                         <button type="submit" class="btn btn-primary">Salvar</button>

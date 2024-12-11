@@ -68,7 +68,8 @@ def criar_usuario():
         user = User(
             username=form.username.data,
             email=form.email.data,
-            is_admin=form.is_admin.data
+            is_admin=form.is_admin.data,
+            can_view_all_processes=form.can_view_all_processes.data
         )
         user.set_password(form.password.data)
         try:
@@ -93,6 +94,7 @@ def editar_usuario(id):
         user.username = form.username.data
         user.email = form.email.data
         user.is_admin = form.is_admin.data
+        user.can_view_all_processes = form.can_view_all_processes.data
         try:
             db.session.commit()
             flash('Usuário atualizado com sucesso!')
@@ -510,7 +512,7 @@ def marcar_notificacao_lida(id):
 @app.route('/toggle_view_all_processes')
 @login_required
 def toggle_view_all_processes():
-    if not current_user.is_admin:
+    if current_user.is_admin or current_user.can_view_all_processes:
         current_user.view_all_processes = not current_user.view_all_processes
         import logging
         logging.basicConfig(level=logging.INFO)
@@ -520,6 +522,8 @@ def toggle_view_all_processes():
             ("todos os processos" if current_user.view_all_processes else "apenas próprios processos")
         )
         db.session.commit()
+    else:
+        flash('Você não tem permissão para visualizar todos os processos.', 'error')
     return redirect(url_for('dashboard'))
 
     return redirect(url_for('listar_notificacoes'))

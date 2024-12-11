@@ -22,6 +22,7 @@
                         <th>Email</th>
                         <th>Status</th>
                         <th>Admin</th>
+                        <th>Ver Todos</th>
                         <th>Ações</th>
                     </tr>
                 </thead>
@@ -38,6 +39,11 @@
                         <td>
                             <span class="badge bg-info">
                                 {{ 'Sim' if user.is_admin else 'Não' }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge bg-success">
+                                {{ 'Sim' if user.can_view_all_processes else 'Não' }}
                             </span>
                         </td>
                         <td>

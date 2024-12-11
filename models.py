@@ -11,6 +11,7 @@ class User(UserMixin, db.Model):
     is_admin = db.Column(db.Boolean, default=False)
     is_active = db.Column(db.Boolean, default=True)
     view_all_processes = db.Column(db.Boolean, default=False)
+    can_view_all_processes = db.Column(db.Boolean, default=False)  # Permissão para ver todos os processos
     processos = db.relationship('Processo', backref='responsavel', lazy=True)
 
     def set_password(self, password):

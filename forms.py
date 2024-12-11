@@ -11,6 +11,7 @@ class UserForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Senha', validators=[])
     is_admin = BooleanField('Administrador')
+    can_view_all_processes = BooleanField('Permitir visualizar todos os processos')
 
 class AlterarSenhaForm(FlaskForm):
     senha_atual = PasswordField('Senha Atual', validators=[DataRequired()])
