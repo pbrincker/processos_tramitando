@@ -115,9 +115,9 @@ class PublicacaoForm(FlaskForm):
         field.data = numero
         
 class ContratoForm(FlaskForm):
-    numero = StringField('Número', validators=[DataRequired(message='O número do contrato é obrigatório'), Length(max=50)])
-    objeto = TextAreaField('Objeto')
-    processo_id = SelectField('Processo', coerce=int)
+    numero = StringField('Número', validators=[Optional(), Length(max=50)])
+    objeto = TextAreaField('Objeto', validators=[DataRequired(message='O objeto do contrato é obrigatório')])
+    processo_id = SelectField('Processo', coerce=int, validators=[DataRequired(message='O processo é obrigatório')])
     fornecedor = StringField('Fornecedor', validators=[DataRequired(), Length(max=200)])
     valor = StringField('Valor', validators=[Optional()], 
                      description='Formato: 0.00 (opcional)')
