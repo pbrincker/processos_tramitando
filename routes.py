@@ -140,8 +140,11 @@ def dashboard():
     query = Processo.query
 
     # Filtros básicos
-    if not current_user.is_admin and not current_user.view_all_processes:
-        query = query.filter_by(responsavel_id=current_user.id)
+    # Se não for admin, verifica as permissões
+    if not current_user.is_admin:
+        # Se não tem permissão para ver todos OU tem permissão mas optou por ver apenas os próprios
+        if not current_user.can_view_all_processes or not current_user.view_all_processes:
+            query = query.filter_by(responsavel_id=current_user.id)
     
     # Aplica filtros da URL
     if objeto := request.args.get('objeto'):

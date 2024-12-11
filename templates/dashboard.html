@@ -20,7 +20,7 @@
         <button type="button" class="btn btn-outline-secondary" id="toggleDashboard">
             <i data-feather="eye"></i> <span>Ocultar Dashboard</span>
         </button>
-        {% if not current_user.is_admin %}
+        {% if not current_user.is_admin and current_user.can_view_all_processes %}
         <a href="{{ url_for('toggle_view_all_processes') }}" class="btn btn-outline-primary ms-2">
             <i data-feather="users"></i> 
             <span>{% if current_user.view_all_processes %}Ver apenas meus processos{% else %}Ver todos os processos{% endif %}</span>
