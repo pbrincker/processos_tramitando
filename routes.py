@@ -1,6 +1,7 @@
 from flask import render_template, redirect, url_for, flash, request, send_file
 from datetime import datetime, timedelta
 from flask_login import login_user, logout_user, login_required, current_user
+from sqlalchemy import func
 from main import app, db, login_manager
 from models import User, Processo, ProcessoHistorico, ProcessoFase, NotificacaoProcesso, Contrato
 from forms import LoginForm, UserForm, ProcessoForm, TramitacaoForm, AlterarSenhaForm, ProcessoFaseForm, PublicacaoForm
