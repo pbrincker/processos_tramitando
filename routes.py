@@ -138,7 +138,7 @@ def dashboard():
     query = Processo.query
 
     # Filtros básicos
-    if not current_user.is_admin:
+    if not current_user.is_admin and not current_user.view_all_processes:
         query = query.filter_by(responsavel_id=current_user.id)
     
     # Aplica filtros da URL
@@ -507,6 +507,14 @@ def marcar_notificacao_lida(id):
     
     notificacao.lida = True
     db.session.commit()
+@app.route('/toggle_view_all_processes')
+@login_required
+def toggle_view_all_processes():
+    if not current_user.is_admin:
+        current_user.view_all_processes = not current_user.view_all_processes
+        db.session.commit()
+    return redirect(url_for('dashboard'))
+
     return redirect(url_for('listar_notificacoes'))
 
 @app.route('/exportar_processos')
