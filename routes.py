@@ -701,88 +701,6 @@ def relatorio_processos_publicados():
                          data_fim=data_fim)
 
 def exportar_relatorio_publicados(processos):
-
-# Rotas de Contratos
-@app.route('/contratos/novo', methods=['GET', 'POST'])
-@login_required
-def novo_contrato():
-    if not current_user.is_admin:
-        flash('Acesso não autorizado')
-        return redirect(url_for('index'))
-        
-    form = ContratoForm()
-    
-    # Carregar processos para o select
-    processos = Processo.query.filter_by(publicado=True).all()
-    form.processo_id.choices = [(p.id, p.numero_processo) for p in processos]
-    
-    # Carregar usuários para o select
-    usuarios = User.query.filter_by(is_active=True).all()
-    form.responsavel_id.choices = [(u.id, u.username) for u in usuarios]
-    
-    if form.validate_on_submit():
-        try:
-            contrato = Contrato(
-                numero=form.numero.data,
-                objeto=form.objeto.data,
-                processo_id=form.processo_id.data,
-                fornecedor=form.fornecedor.data,
-                valor=form.valor.data,
-                data_assinatura=datetime.strptime(form.data_assinatura.data, '%Y-%m-%d').date(),
-                data_vigencia=datetime.strptime(form.data_vigencia.data, '%Y-%m-%d').date(),
-                responsavel_id=form.responsavel_id.data,
-                status='vigente'
-            )
-            
-            db.session.add(contrato)
-            db.session.commit()
-            flash('Contrato cadastrado com sucesso!')
-            return redirect(url_for('dashboard_contratos'))
-            
-        except Exception as e:
-            db.session.rollback()
-            flash('Erro ao cadastrar contrato: ' + str(e))
-            
-    return render_template('contrato_form.html', form=form)
-
-@app.route('/contratos/<int:id>/editar', methods=['GET', 'POST'])
-@login_required
-def editar_contrato(id):
-    if not current_user.is_admin:
-        flash('Acesso não autorizado')
-        return redirect(url_for('index'))
-        
-    contrato = Contrato.query.get_or_404(id)
-    form = ContratoForm(obj=contrato)
-    
-    # Carregar processos para o select
-    processos = Processo.query.filter_by(publicado=True).all()
-    form.processo_id.choices = [(p.id, p.numero_processo) for p in processos]
-    
-    # Carregar usuários para o select
-    usuarios = User.query.filter_by(is_active=True).all()
-    form.responsavel_id.choices = [(u.id, u.username) for u in usuarios]
-    
-    if form.validate_on_submit():
-        try:
-            contrato.numero = form.numero.data
-            contrato.objeto = form.objeto.data
-            contrato.processo_id = form.processo_id.data
-            contrato.fornecedor = form.fornecedor.data
-            contrato.valor = form.valor.data
-            contrato.data_assinatura = datetime.strptime(form.data_assinatura.data, '%Y-%m-%d').date()
-            contrato.data_vigencia = datetime.strptime(form.data_vigencia.data, '%Y-%m-%d').date()
-            contrato.responsavel_id = form.responsavel_id.data
-            
-            db.session.commit()
-            flash('Contrato atualizado com sucesso!')
-            return redirect(url_for('dashboard_contratos'))
-            
-        except Exception as e:
-            db.session.rollback()
-            flash('Erro ao atualizar contrato: ' + str(e))
-            
-    return render_template('contrato_form.html', form=form, contrato=contrato)
     wb = Workbook()
     ws = wb.active
     ws.title = "Relatório de Publicações"
@@ -837,3 +755,85 @@ def editar_contrato(id):
         as_attachment=True,
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
+
+# Rotas de Contratos
+@app.route('/contratos/novo', methods=['GET', 'POST'])
+@login_required
+def novo_contrato():
+    if not current_user.is_admin:
+        flash('Acesso não autorizado')
+        return redirect(url_for('index'))
+
+    form = ContratoForm()
+
+    # Carregar processos para o select
+    processos = Processo.query.filter_by(publicado=True).all()
+    form.processo_id.choices = [(p.id, p.numero_processo) for p in processos]
+
+    # Carregar usuários para o select
+    usuarios = User.query.filter_by(is_active=True).all()
+    form.responsavel_id.choices = [(u.id, u.username) for u in usuarios]
+
+    if form.validate_on_submit():
+        try:
+            contrato = Contrato(
+                numero=form.numero.data,
+                objeto=form.objeto.data,
+                processo_id=form.processo_id.data,
+                fornecedor=form.fornecedor.data,
+                valor=form.valor.data,
+                data_assinatura=datetime.strptime(form.data_assinatura.data, '%Y-%m-%d').date(),
+                data_vigencia=datetime.strptime(form.data_vigencia.data, '%Y-%m-%d').date(),
+                responsavel_id=form.responsavel_id.data,
+                status='vigente'
+            )
+
+            db.session.add(contrato)
+            db.session.commit()
+            flash('Contrato cadastrado com sucesso!')
+            return redirect(url_for('dashboard_contratos'))
+
+        except Exception as e:
+            db.session.rollback()
+            flash('Erro ao cadastrar contrato: ' + str(e))
+
+    return render_template('contrato_form.html', form=form)
+
+@app.route('/contratos/<int:id>/editar', methods=['GET', 'POST'])
+@login_required
+def editar_contrato(id):
+    if not current_user.is_admin:
+        flash('Acesso não autorizado')
+        return redirect(url_for('index'))
+
+    contrato = Contrato.query.get_or_404(id)
+    form = ContratoForm(obj=contrato)
+
+    # Carregar processos para o select
+    processos = Processo.query.filter_by(publicado=True).all()
+    form.processo_id.choices = [(p.id, p.numero_processo) for p in processos]
+
+    # Carregar usuários para o select
+    usuarios = User.query.filter_by(is_active=True).all()
+    form.responsavel_id.choices = [(u.id, u.username) for u in usuarios]
+
+    if form.validate_on_submit():
+        try:
+            contrato.numero = form.numero.data
+            contrato.objeto = form.objeto.data
+            contrato.processo_id = form.processo_id.data
+            contrato.fornecedor = form.fornecedor.data
+            contrato.valor = form.valor.data
+            contrato.data_assinatura = datetime.strptime(form.data_assinatura.data, '%Y-%m-%d').date()
+            contrato.data_vigencia = datetime.strptime(form.data_vigencia.data, '%Y-%m-%d').date()
+            contrato.responsavel_id = form.responsavel_id.data
+
+            db.session.commit()
+            flash('Contrato atualizado com sucesso!')
+            return redirect(url_for('dashboard_contratos'))
+
+        except Exception as e:
+            db.session.rollback()
+            flash('Erro ao atualizar contrato: ' + str(e))
+
+    return render_template('contrato_form.html', form=form, contrato=contrato)
