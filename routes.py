@@ -512,6 +512,13 @@ def marcar_notificacao_lida(id):
 def toggle_view_all_processes():
     if not current_user.is_admin:
         current_user.view_all_processes = not current_user.view_all_processes
+        import logging
+        logging.basicConfig(level=logging.INFO)
+        logger = logging.getLogger(__name__)
+        logger.info(
+            f"Usuário {current_user.username} (ID: {current_user.id}) alterou visualização de processos para: " +
+            ("todos os processos" if current_user.view_all_processes else "apenas próprios processos")
+        )
         db.session.commit()
     return redirect(url_for('dashboard'))
 
