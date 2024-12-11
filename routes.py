@@ -512,6 +512,38 @@ def marcar_notificacao_lida(id):
     
     notificacao.lida = True
     db.session.commit()
+
+@app.route('/processo/<int:id>/publicar', methods=['GET', 'POST'])
+@login_required
+def publicar_processo(id):
+    processo = Processo.query.get_or_404(id)
+    form = PublicacaoForm()
+    
+    if form.validate_on_submit():
+        processo.numero_publicacao = form.numero_publicacao.data
+        processo.data_publicacao = datetime.strptime(form.data_publicacao.data, '%Y-%m-%d').date()
+        processo.data_sessao = datetime.strptime(form.data_sessao.data, '%Y-%m-%d').date()
+        processo.publicado = True
+        processo.status = 'publicado'
+        
+        historico = ProcessoHistorico(
+            processo_id=processo.id,
+            observacao=f"Processo publicado com número {processo.numero_publicacao}",
+            usuario_id=current_user.id,
+            data_registro=datetime.now()
+        )
+        
+        try:
+            db.session.add(historico)
+            db.session.commit()
+            flash('Processo publicado com sucesso!')
+            return redirect(url_for('visualizar_processo', id=processo.id))
+        except Exception as e:
+            db.session.rollback()
+            flash('Erro ao publicar processo: ' + str(e), 'error')
+            
+    return render_template('processo_publicar.html', form=form, processo=processo)
+
 @app.route('/toggle_view_all_processes')
 @login_required
 def toggle_view_all_processes():

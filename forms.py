@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, TextAreaField, SelectField, IntegerField
-from wtforms.validators import DataRequired, Email, EqualTo, Length
+from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError
 
 class LoginForm(FlaskForm):
     username = StringField('Usuário', validators=[DataRequired()])
@@ -71,6 +71,20 @@ class TramitacaoForm(FlaskForm):
                 return False
         return True
 
+class ProcessoFaseForm(FlaskForm):
+    codigo = StringField('Código', validators=[DataRequired(), Length(max=50)])
+    descricao = StringField('Descrição', validators=[DataRequired(), Length(max=100)])
+    ordem = IntegerField('Ordem', validators=[DataRequired()])
+    cor = SelectField('Cor do Badge', choices=[
+        ('primary', 'Azul'),
+        ('secondary', 'Cinza'),
+        ('success', 'Verde'),
+        ('danger', 'Vermelho'),
+        ('warning', 'Amarelo'),
+        ('info', 'Azul Claro')
+    ], validators=[DataRequired()])
+    ativo = BooleanField('Ativo')
+
 class PublicacaoForm(FlaskForm):
     numero_publicacao = StringField('Número', validators=[
         DataRequired(), 
@@ -97,17 +111,3 @@ class PublicacaoForm(FlaskForm):
         
         # Atualiza o valor do campo
         field.data = numero
-
-class ProcessoFaseForm(FlaskForm):
-    codigo = StringField('Código', validators=[DataRequired(), Length(max=50)])
-    descricao = StringField('Descrição', validators=[DataRequired(), Length(max=100)])
-    ordem = IntegerField('Ordem', validators=[DataRequired()])
-    cor = SelectField('Cor do Badge', choices=[
-        ('primary', 'Azul'),
-        ('secondary', 'Cinza'),
-        ('success', 'Verde'),
-        ('danger', 'Vermelho'),
-        ('warning', 'Amarelo'),
-        ('info', 'Azul Claro')
-    ], validators=[DataRequired()])
-    ativo = BooleanField('Ativo')
