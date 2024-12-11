@@ -1,6 +1,5 @@
 from flask import render_template, redirect, url_for, flash, request, send_file
 from datetime import datetime, timedelta
-from sqlalchemy import func
 from flask_login import login_user, logout_user, login_required, current_user
 from main import app, db, login_manager
 from models import User, Processo, ProcessoHistorico, ProcessoFase, NotificacaoProcesso
@@ -124,33 +123,6 @@ def toggle_status_usuario(id):
     user = User.query.get_or_404(id)
     if user == current_user:
         flash('Não é possível alterar o próprio status')
-
-@app.route('/dashboard/contratos')
-@login_required
-def dashboard_contratos():
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 20, type=int)
-    
-    query = Contrato.query
-    if not current_user.is_admin and not current_user.view_all_processes:
-        query = query.filter_by(responsavel_id=current_user.id)
-        
-    contratos = query.order_by(Contrato.created_at.desc()).paginate(page=page, per_page=per_page)
-    
-    # Métricas
-    total_contratos = query.count()
-    valor_total_contratos = db.session.query(func.sum(Contrato.valor)).scalar() or 0
-    contratos_por_status = db.session.query(Contrato.status, func.count(Contrato.id)).group_by(Contrato.status).all()
-    contratos_por_status = dict(contratos_por_status)
-    
-    return render_template('dashboard_contratos.html',
-                         contratos=contratos,
-                         total_contratos=total_contratos,
-                         valor_total_contratos=valor_total_contratos,
-                         contratos_por_status=contratos_por_status,
-                         per_page=per_page,
-                         current_page=page,
-                         total_pages=contratos.pages)
         return redirect(url_for('listar_usuarios'))
     user.is_active = not user.is_active
     db.session.commit()
