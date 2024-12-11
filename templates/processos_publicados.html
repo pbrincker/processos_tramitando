@@ -14,7 +14,7 @@
                 <thead>
                     <tr>
                         <th>Modalidade</th>
-                        <th>Número Publicação</th>
+                        <th>Número Processo</th>
                         <th>Data Publicação</th>
                         <th>Data Sessão</th>
                         <th>Objeto</th>
@@ -24,14 +24,7 @@
                 <tbody>
                     {% for processo in processos %}
                     <tr>
-                        <td>
-                            {% set modalidade_formatada = processo.modalidade|replace('_', ' ')|title %}
-                            {% if 'Pregao' in modalidade_formatada %}
-                                {{ modalidade_formatada|replace('Pregao', 'Pregão') }}
-                            {% else %}
-                                {{ modalidade_formatada }}
-                            {% endif %}
-                        </td>
+                        <td>{{ processo.modalidade_formatada }}</td>
                         <td>{{ processo.numero_publicacao }}</td>
                         <td>{{ processo.data_publicacao.strftime('%d/%m/%Y') }}</td>
                         <td>{{ processo.data_sessao.strftime('%d/%m/%Y') }}</td>

@@ -465,7 +465,16 @@ def listar_processos_publicados():
            (current_user.can_view_all_processes and not current_user.view_all_processes):
             query = query.filter_by(responsavel_id=current_user.id)
     
+    # Ordenar por data da sessão e filtrar apenas sessões futuras
     processos = query.order_by(Processo.data_sessao.asc()).all()
+    
+    # Formatar modalidade para exibição
+    for processo in processos:
+        modalidade = processo.modalidade.replace('_', ' ').title()
+        if 'Pregao' in modalidade:
+            processo.modalidade_formatada = modalidade.replace('Pregao', 'Pregão')
+        else:
+            processo.modalidade_formatada = modalidade
     return render_template('processos_publicados.html', processos=processos)
 
 @app.route('/notificacoes/<int:id>/lida', methods=['POST'])
