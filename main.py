@@ -70,11 +70,36 @@ if database_url:
     # Convert postgres:// to postgresql:// in database URL
     if database_url.startswith('postgres://'):
         database_url = database_url.replace('postgres://', 'postgresql://', 1)
-    # Add sslmode=require only if not already present
-    if 'sslmode=' not in database_url:
-        database_url += "?sslmode=require"
+    
+    # Parse and rebuild the URL with correct SSL parameters
+    if '?' in database_url:
+        base_url, params = database_url.split('?', 1)
+        params = dict(param.split('=') for param in params.split('&'))
+    else:
+        base_url, params = database_url, {}
+    
+    # Set required SSL parameters
+    params.update({
+        'sslmode': 'require',
+        'connect_timeout': '10',
+        'keepalives': '1',
+        'keepalives_idle': '30',
+        'keepalives_interval': '10',
+        'keepalives_count': '5',
+        'sslcert': None
+    })
+    
+    # Rebuild URL with parameters
+    database_url = base_url + '?' + '&'.join(f"{k}={v}" for k, v in params.items())
+
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_size': 10,
+    'pool_timeout': 30,
+    'pool_recycle': 1800,
+    'max_overflow': 2
+}
 
 db = SQLAlchemy(app)
 login_manager = LoginManager()
