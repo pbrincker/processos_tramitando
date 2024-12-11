@@ -809,9 +809,9 @@ def novo_contrato():
                 objeto=form.objeto.data,
                 processo_id=form.processo_id.data,
                 fornecedor=form.fornecedor.data,
-                valor=form.valor.data,
-                data_assinatura=datetime.strptime(form.data_assinatura.data, '%Y-%m-%d').date(),
-                data_vigencia=datetime.strptime(form.data_vigencia.data, '%Y-%m-%d').date(),
+                valor=form.valor.data if form.valor.data else None,
+                data_assinatura=datetime.strptime(form.data_assinatura.data, '%Y-%m-%d').date() if form.data_assinatura.data else None,
+                data_vigencia=datetime.strptime(form.data_vigencia.data, '%Y-%m-%d').date() if form.data_vigencia.data else None,
                 responsavel_id=form.responsavel_id.data,
                 status='vigente'
             )
