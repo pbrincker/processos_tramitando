@@ -399,8 +399,15 @@ def publicar_processo(id):
     
     return render_template('processo_publicar.html', form=form, processo=processo)
 
-# Notificações
+# Notificações e Processos Publicados
 @app.route('/notificacoes')
+@login_required
+def listar_notificacoes():
+    notificacoes = NotificacaoProcesso.query.filter_by(
+        destinatario_id=current_user.id
+    ).order_by(NotificacaoProcesso.created_at.desc()).all()
+    return render_template('notificacoes.html', notificacoes=notificacoes)
+
 @app.route('/processos/publicados')
 @login_required
 def listar_processos_publicados():
@@ -414,13 +421,6 @@ def listar_processos_publicados():
     
     processos = query.order_by(Processo.data_publicacao.desc()).all()
     return render_template('processos_publicados.html', processos=processos)
-
-@login_required
-def listar_notificacoes():
-    notificacoes = NotificacaoProcesso.query.filter_by(
-        destinatario_id=current_user.id
-    ).order_by(NotificacaoProcesso.created_at.desc()).all()
-    return render_template('notificacoes.html', notificacoes=notificacoes)
 
 @app.route('/notificacoes/<int:id>/lida', methods=['POST'])
 @login_required
