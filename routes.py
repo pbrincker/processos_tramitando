@@ -1,14 +1,21 @@
-from flask import render_template, redirect, url_for, flash, request
+from flask import render_template, redirect, url_for, flash, request, send_file
 from datetime import datetime, timedelta
 from flask_login import login_user, logout_user, login_required, current_user
 from main import app, db, login_manager
 from models import User, Processo, ProcessoHistorico, ProcessoFase, NotificacaoProcesso
 from forms import LoginForm, UserForm, ProcessoForm, TramitacaoForm, AlterarSenhaForm, ProcessoFaseForm, PublicacaoForm
+import logging
+from openpyxl import Workbook
+from io import BytesIO
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 @login_manager.user_loader
 def load_user(id):
     return User.query.get(int(id))
 
+# Autenticação e Perfil
 @app.route('/')
 @login_required
 def index():
@@ -48,6 +55,7 @@ def alterar_senha():
             flash('Senha atual incorreta')
     return render_template('alterar_senha.html', form=form)
 
+# Gerenciamento de Usuários
 @app.route('/usuarios')
 @login_required
 def listar_usuarios():
@@ -104,21 +112,6 @@ def editar_usuario(id):
             flash('Erro ao atualizar usuário. Este usuário ou email já existe.')
     return render_template('user_form.html', form=form, user=user)
 
-@app.route('/usuarios/<int:id>/senha', methods=['GET', 'POST'])
-@login_required
-def redefinir_senha_usuario(id):
-    if not current_user.is_admin:
-        flash('Acesso não autorizado')
-        return redirect(url_for('index'))
-    user = User.query.get_or_404(id)
-    form = AlterarSenhaForm()
-    if form.validate_on_submit():
-        user.set_password(form.password.data)
-        db.session.commit()
-        flash('Senha redefinida com sucesso!')
-        return redirect(url_for('listar_usuarios'))
-    return render_template('user_form.html', form=form, user=user, password_reset=True)
-
 @app.route('/usuarios/<int:id>/toggle_status')
 @login_required
 def toggle_status_usuario(id):
@@ -134,19 +127,19 @@ def toggle_status_usuario(id):
     flash(f'Status do usuário alterado para {"ativo" if user.is_active else "inativo"}!')
     return redirect(url_for('listar_usuarios'))
 
+# Dashboard e Listagens
 @app.route('/dashboard')
 @login_required
 def dashboard():
     query = Processo.query
-
-    # Filtros básicos
-    # Se não for admin, verifica as permissões
+    
+    # Filtros de permissão
     if not current_user.is_admin:
-        # Se não tem permissão para ver todos OU tem permissão e optou por ver apenas os próprios
-        if not current_user.can_view_all_processes or (current_user.can_view_all_processes and not current_user.view_all_processes):
+        if not current_user.can_view_all_processes or \
+           (current_user.can_view_all_processes and not current_user.view_all_processes):
             query = query.filter_by(responsavel_id=current_user.id)
     
-    # Aplica filtros da URL
+    # Filtros da URL
     if objeto := request.args.get('objeto'):
         query = query.filter(Processo.objeto.ilike(f'%{objeto}%'))
     if status_list := request.args.getlist('status'):
@@ -155,13 +148,10 @@ def dashboard():
         responsavel_ids = [int(r) for r in responsavel_list]
         query = query.filter(Processo.responsavel_id.in_(responsavel_ids))
     
-    # Executa a consulta ordenando por data de criação decrescente
+    # Ordenação por data de criação decrescente
     processos = query.order_by(Processo.created_at.desc()).all()
     
     # Métricas
-    import logging
-    logging.basicConfig(level=logging.DEBUG)
-    
     total_processos = len(processos)
     processos_por_status = {}
     processos_por_modalidade = {}
@@ -182,9 +172,6 @@ def dashboard():
         if processo.valor_estimado:
             valor_total += float(processo.valor_estimado)
     
-    logging.debug(f"Status: {processos_por_status}")
-    logging.debug(f"Modalidades: {processos_por_modalidade}")
-    
     return render_template('dashboard.html',
                          processos=processos,
                          ProcessoFase=ProcessoFase,
@@ -194,43 +181,7 @@ def dashboard():
                          processos_por_modalidade=processos_por_modalidade,
                          valor_total=valor_total)
 
-@app.route('/lista_processos')
-@login_required
-def lista_processos():
-    page = request.args.get('page', 1, type=int)
-    query = Processo.query
-    
-    # Filtros
-    if numero_processo := request.args.get('numero_processo'):
-        query = query.filter(Processo.numero_processo.ilike(f'%{numero_processo}%'))
-    if modalidade := request.args.get('modalidade'):
-        query = query.filter(Processo.modalidade == modalidade)
-    if status := request.args.get('status'):
-        query = query.filter(Processo.status == status)
-    if data_inicio := request.args.get('data_inicio'):
-        query = query.filter(Processo.data_abertura >= datetime.strptime(data_inicio, '%Y-%m-%d'))
-    if data_fim := request.args.get('data_fim'):
-        query = query.filter(Processo.data_abertura <= datetime.strptime(data_fim, '%Y-%m-%d'))
-    
-    # Ordenação
-    sort = request.args.get('sort', 'data_abertura')
-    direction = request.args.get('direction', 'desc')
-    
-    if direction == 'desc':
-        query = query.order_by(getattr(Processo, sort).desc())
-    else:
-        query = query.order_by(getattr(Processo, sort).asc())
-    
-    processos = query.paginate(page=page, per_page=10)
-    return render_template('processo_list.html', processos=processos)
-
-@app.route('/processo/<int:id>')
-@login_required
-def visualizar_processo(id):
-    from models import User
-    processo = Processo.query.get_or_404(id)
-    return render_template('processo_view.html', processo=processo, User=User, ProcessoFase=ProcessoFase)
-
+# Gerenciamento de Processos
 @app.route('/processo/novo', methods=['GET', 'POST'])
 @login_required
 def novo_processo():
@@ -258,24 +209,38 @@ def novo_processo():
             modalidade=form.modalidade.data,
             valor_estimado=valor_estimado,
             status='novo',
-            data_recebimento=form.data_recebimento.data,
+            data_recebimento=datetime.strptime(form.data_recebimento.data, '%Y-%m-%d').date() if form.data_recebimento.data else None,
             responsavel_id=form.responsavel_id.data
         )
-        db.session.add(processo)
-        db.session.commit()
         
-        historico = ProcessoHistorico(
-            processo_id=processo.id,
-            status_novo='novo',
-            observacao=form.observacao.data or "Processo cadastrado",
-            usuario_id=current_user.id
-        )
-        db.session.add(historico)
-        db.session.commit()
-        
-        flash('Processo cadastrado com sucesso!')
-        return redirect(url_for('dashboard'))
+        try:
+            db.session.add(processo)
+            db.session.commit()
+            
+            historico = ProcessoHistorico(
+                processo_id=processo.id,
+                status_novo='novo',
+                observacao=form.observacao.data or "Processo cadastrado",
+                usuario_id=current_user.id,
+                data_registro=datetime.now()
+            )
+            db.session.add(historico)
+            db.session.commit()
+            
+            flash('Processo cadastrado com sucesso!')
+            return redirect(url_for('dashboard'))
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Erro ao cadastrar processo: {str(e)}")
+            flash('Erro ao cadastrar processo.')
+            
     return render_template('processo_form.html', form=form)
+
+@app.route('/processo/<int:id>')
+@login_required
+def visualizar_processo(id):
+    processo = Processo.query.get_or_404(id)
+    return render_template('processo_view.html', processo=processo, User=User, ProcessoFase=ProcessoFase)
 
 @app.route('/processo/<int:id>/editar', methods=['GET', 'POST'])
 @login_required
@@ -290,126 +255,94 @@ def editar_processo(id):
     form.responsavel_id.choices = [(u.id, u.username) for u in usuarios_ativos]
     
     if form.validate_on_submit():
-        status_anterior = processo.status
-        responsavel_anterior = processo.responsavel_id
-        form.populate_obj(processo)
-        
-        if status_anterior != processo.status:
-            historico = ProcessoHistorico(
-                processo_id=processo.id,
-                status_anterior=status_anterior,
-                status_novo=processo.status,
-                observacao=f"Status alterado de {status_anterior} para {processo.status}",
-                usuario_id=current_user.id
-            )
-            db.session.add(historico)
-        
-        if responsavel_anterior != processo.responsavel_id:
-            responsavel_novo = User.query.get(processo.responsavel_id)
-            historico = ProcessoHistorico(
-                processo_id=processo.id,
-                observacao=f"Responsável alterado para {responsavel_novo.username}",
-                usuario_id=current_user.id
-            )
-            db.session.add(historico)
-        
-        db.session.commit()
-        flash('Processo atualizado com sucesso!')
-        return redirect(url_for('dashboard'))
+        try:
+            status_anterior = processo.status
+            responsavel_anterior = processo.responsavel_id
+            
+            # Atualiza os campos do processo
+            processo.objeto = form.objeto.data
+            processo.modalidade = form.modalidade.data
+            processo.responsavel_id = form.responsavel_id.data
+            processo.data_recebimento = datetime.strptime(form.data_recebimento.data, '%Y-%m-%d').date() if form.data_recebimento.data else None
+            
+            if form.valor_estimado.data and form.valor_estimado.data.strip():
+                valor_str = ''.join(c for c in form.valor_estimado.data if c.isdigit() or c in '.,')
+                valor_str = valor_str.replace(',', '.')
+                processo.valor_estimado = float(valor_str)
+            
+            # Registra alteração de responsável no histórico
+            if responsavel_anterior != processo.responsavel_id:
+                responsavel_novo = User.query.get(processo.responsavel_id)
+                historico = ProcessoHistorico(
+                    processo_id=processo.id,
+                    observacao=f"Responsável alterado para {responsavel_novo.username}",
+                    usuario_id=current_user.id,
+                    data_registro=datetime.now()
+                )
+                db.session.add(historico)
+            
+            db.session.commit()
+            flash('Processo atualizado com sucesso!')
+            return redirect(url_for('dashboard'))
+            
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Erro ao atualizar processo: {str(e)}")
+            flash('Erro ao atualizar processo.')
     
     return render_template('processo_form.html', form=form, processo=processo)
 
 @app.route('/processo/<int:id>/tramitar', methods=['GET', 'POST'])
 @login_required
 def tramitar_processo(id):
-    import logging
-    from datetime import datetime, timedelta
-    
-    logging.basicConfig(level=logging.DEBUG)
-    logger = logging.getLogger(__name__)
-    
     processo = Processo.query.get_or_404(id)
     fases_ativas = ProcessoFase.query.filter_by(ativo=True).order_by(ProcessoFase.ordem).all()
     form = TramitacaoForm()
     form.status.choices = [(fase.codigo, fase.descricao) for fase in fases_ativas]
     
-    if request.method == 'POST':
-        logger.debug(f"Dados do formulário: {request.form}")
-        
-        if not form.validate():
-            logger.error(f"Erros de validação: {form.errors}")
-            for field, errors in form.errors.items():
-                for error in errors:
-                    flash(f'Erro no campo {getattr(form, field).label.text}: {error}', 'error')
-            return render_template('processo_tramitar.html', form=form, processo=processo)
-        
-        logger.debug("Formulário validado com sucesso")
-        status_anterior = processo.status
-        processo.status = form.status.data
-        
-        # Define a data de registro (atual se não informada)
-        data_registro = datetime.now()
-        if form.data_registro.data:
-            try:
-                data_registro = datetime.strptime(form.data_registro.data, '%Y-%m-%d')
-                logger.debug(f"Data de registro definida: {data_registro}")
-            except (ValueError, TypeError) as e:
-                logger.warning(f"Erro ao converter data de registro: {e}")
-                flash('Data de registro inválida, usando data atual', 'warning')
-
-        # Cria o histórico básico
-        historico = ProcessoHistorico(
-            processo_id=processo.id,
-            status_anterior=status_anterior,
-            status_novo=processo.status,
-            observacao=form.observacao.data,
-            usuario_id=current_user.id,
-            data_registro=data_registro,
-            created_at=data_registro
-        )
-
-        # Cria o histórico base
-        historico = ProcessoHistorico(
-            processo_id=processo.id,
-            status_anterior=status_anterior,
-            status_novo=processo.status,
-            observacao=form.observacao.data,
-            usuario_id=current_user.id,
-            data_registro=data_registro,
-            created_at=data_registro
-        )
-        logger.debug(f"Histórico base criado: {historico.__dict__}")
-
-        # Adiciona informações de prazo apenas se habilitado
-        # Processa prazo apenas se estiver habilitado (a validação já garantiu que os dados estão corretos)
-        if form.habilitar_prazo.data:
-            historico.dias_prazo = form.dias_prazo.data
-            historico.tipo_prazo = form.tipo_prazo.data
-            historico.prazo_inicio = data_registro
-
-            # Calcula data fim baseado no tipo de prazo
-            if form.tipo_prazo.data == 'util':
-                dias_contados = 0
-                # O form.validate() já converteu dias_prazo para inteiro
-                dias_prazo = int(form.dias_prazo.data)
-                historico.dias_prazo = dias_prazo
-                data_prazo = historico.prazo_inicio
-                while dias_contados < historico.dias_prazo:
-                    data_prazo += timedelta(days=1)
-                    if data_prazo.weekday() < 5:  # Não é sábado nem domingo
-                        dias_contados += 1
-                historico.prazo_fim = data_prazo
-            else:
-                historico.prazo_fim = historico.prazo_inicio + timedelta(days=historico.dias_prazo)
-            
-            logger.debug(f"Prazo configurado: início={historico.prazo_inicio}, fim={historico.prazo_fim}")
-        
+    if form.validate_on_submit():
         try:
-            logger.debug("Iniciando salvamento das alterações")
-            # Salva o histórico
+            status_anterior = processo.status
+            processo.status = form.status.data
+            
+            # Define a data de registro
+            data_registro = datetime.now()
+            if form.data_registro.data:
+                data_registro = datetime.strptime(form.data_registro.data, '%Y-%m-%d')
+            
+            # Cria o histórico
+            historico = ProcessoHistorico(
+                processo_id=processo.id,
+                status_anterior=status_anterior,
+                status_novo=processo.status,
+                observacao=form.observacao.data,
+                usuario_id=current_user.id,
+                data_registro=data_registro,
+                created_at=data_registro
+            )
+            
+            # Adiciona informações de prazo
+            if form.habilitar_prazo.data:
+                historico.dias_prazo = int(form.dias_prazo.data)
+                historico.tipo_prazo = form.tipo_prazo.data
+                historico.prazo_inicio = data_registro
+                
+                # Calcula prazo final
+                if form.tipo_prazo.data == 'util':
+                    dias_contados = 0
+                    data_prazo = historico.prazo_inicio
+                    while dias_contados < historico.dias_prazo:
+                        data_prazo += timedelta(days=1)
+                        if data_prazo.weekday() < 5:  # Não é sábado nem domingo
+                            dias_contados += 1
+                    historico.prazo_fim = data_prazo
+                else:
+                    historico.prazo_fim = historico.prazo_inicio + timedelta(days=historico.dias_prazo)
+            
+            # Salva as alterações
             db.session.add(historico)
             
-            # Cria notificação para o responsável se necessário
+            # Cria notificação
             if processo.responsavel_id != current_user.id:
                 notificacao = NotificacaoProcesso(
                     processo_id=processo.id,
@@ -419,24 +352,75 @@ def tramitar_processo(id):
                     remetente_id=current_user.id
                 )
                 db.session.add(notificacao)
-                logger.debug("Notificação criada para o responsável")
             
-            # Commit das alterações
             db.session.commit()
-            logger.info("Processo tramitado com sucesso")
-            flash('Processo tramitado com sucesso!', 'success')
+            flash('Processo tramitado com sucesso!')
             return redirect(url_for('dashboard'))
             
         except Exception as e:
             db.session.rollback()
             logger.error(f"Erro ao tramitar processo: {str(e)}")
-            flash('Erro ao tramitar processo: ' + str(e), 'error')
-            return render_template('processo_tramitar.html', form=form, processo=processo)
+            flash('Erro ao tramitar processo: ' + str(e))
     
-    # GET request
-    logger.debug("Exibindo formulário de tramitação")
     return render_template('processo_tramitar.html', form=form, processo=processo)
 
+@app.route('/processo/<int:id>/publicar', methods=['GET', 'POST'])
+@login_required
+def publicar_processo(id):
+    processo = Processo.query.get_or_404(id)
+    form = PublicacaoForm()
+    
+    if form.validate_on_submit():
+        try:
+            processo.numero_publicacao = form.numero_publicacao.data
+            processo.data_publicacao = datetime.strptime(form.data_publicacao.data, '%Y-%m-%d').date()
+            processo.data_sessao = datetime.strptime(form.data_sessao.data, '%Y-%m-%d').date()
+            processo.publicado = True
+            processo.status = 'publicado'
+            
+            historico = ProcessoHistorico(
+                processo_id=processo.id,
+                status_anterior=processo.status,
+                status_novo='publicado',
+                observacao=f"Processo publicado com número {processo.numero_publicacao}",
+                usuario_id=current_user.id,
+                data_registro=datetime.now()
+            )
+            
+            db.session.add(historico)
+            db.session.commit()
+            flash('Processo publicado com sucesso!')
+            return redirect(url_for('visualizar_processo', id=processo.id))
+            
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Erro ao publicar processo: {str(e)}")
+            flash('Erro ao publicar processo: ' + str(e))
+    
+    return render_template('processo_publicar.html', form=form, processo=processo)
+
+# Notificações
+@app.route('/notificacoes')
+@login_required
+def listar_notificacoes():
+    notificacoes = NotificacaoProcesso.query.filter_by(
+        destinatario_id=current_user.id
+    ).order_by(NotificacaoProcesso.created_at.desc()).all()
+    return render_template('notificacoes.html', notificacoes=notificacoes)
+
+@app.route('/notificacoes/<int:id>/lida', methods=['POST'])
+@login_required
+def marcar_notificacao_lida(id):
+    notificacao = NotificacaoProcesso.query.get_or_404(id)
+    if notificacao.destinatario_id != current_user.id:
+        flash('Acesso não autorizado')
+        return redirect(url_for('index'))
+    
+    notificacao.lida = True
+    db.session.commit()
+    return redirect(url_for('listar_notificacoes'))
+
+# Configurações
 @app.route('/admin/fases')
 @login_required
 def listar_fases():
@@ -494,105 +478,18 @@ def editar_fase(id):
             flash('Erro ao atualizar fase. Este código já existe.')
     return render_template('fase_form.html', form=form, fase=fase)
 
-@app.route('/notificacoes')
-@login_required
-def listar_notificacoes():
-    notificacoes = NotificacaoProcesso.query.filter_by(
-        destinatario_id=current_user.id
-    ).order_by(NotificacaoProcesso.created_at.desc()).all()
-    return render_template('notificacoes.html', notificacoes=notificacoes)
-
-@app.route('/notificacoes/<int:id>/lida', methods=['POST'])
-@login_required
-def marcar_notificacao_lida(id):
-    notificacao = NotificacaoProcesso.query.get_or_404(id)
-    if notificacao.destinatario_id != current_user.id:
-        flash('Acesso não autorizado')
-        return redirect(url_for('index'))
-    
-    notificacao.lida = True
-    db.session.commit()
-
-@app.route('/processo/<int:id>/publicar', methods=['GET', 'POST'])
-@login_required
-def publicar_processo(id):
-    processo = Processo.query.get_or_404(id)
-    form = PublicacaoForm()
-    
-    if form.validate_on_submit():
-        processo.numero_publicacao = form.numero_publicacao.data
-        processo.data_publicacao = datetime.strptime(form.data_publicacao.data, '%Y-%m-%d').date()
-        processo.data_sessao = datetime.strptime(form.data_sessao.data, '%Y-%m-%d').date()
-        processo.publicado = True
-        processo.status = 'publicado'
-        
-        historico = ProcessoHistorico(
-            processo_id=processo.id,
-            observacao=f"Processo publicado com número {processo.numero_publicacao}",
-            usuario_id=current_user.id,
-            data_registro=datetime.now()
-        )
-        
-        try:
-            db.session.add(historico)
-            db.session.commit()
-            flash('Processo publicado com sucesso!')
-            return redirect(url_for('visualizar_processo', id=processo.id))
-        except Exception as e:
-            db.session.rollback()
-            flash('Erro ao publicar processo: ' + str(e), 'error')
-            
-    return render_template('processo_publicar.html', form=form, processo=processo)
-
+# Configuração de visualização
 @app.route('/toggle_view_all_processes')
 @login_required
 def toggle_view_all_processes():
     if current_user.is_admin or current_user.can_view_all_processes:
         current_user.view_all_processes = not current_user.view_all_processes
-        import logging
-        logging.basicConfig(level=logging.INFO)
-        logger = logging.getLogger(__name__)
-        logger.info(
-            f"Usuário {current_user.username} (ID: {current_user.id}) alterou visualização de processos para: " +
-            ("todos os processos" if current_user.view_all_processes else "apenas próprios processos")
-        )
         db.session.commit()
+        flash(f'Visualização alterada para {"todos os processos" if current_user.view_all_processes else "apenas seus processos"}.')
     else:
-        flash('Você não tem permissão para visualizar todos os processos.', 'error')
+        flash('Você não tem permissão para visualizar todos os processos.')
     return redirect(url_for('dashboard'))
 
-    return redirect(url_for('listar_notificacoes'))
-
-@app.route('/processo/<int:id>/publicar', methods=['GET', 'POST'])
-@login_required
-def publicar_processo(id):
-    processo = Processo.query.get_or_404(id)
-    form = PublicacaoForm()
-    
-    if form.validate_on_submit():
-        processo.numero_publicacao = form.numero_publicacao.data
-        processo.data_publicacao = datetime.strptime(form.data_publicacao.data, '%Y-%m-%d').date()
-        processo.data_sessao = datetime.strptime(form.data_sessao.data, '%Y-%m-%d').date()
-        processo.publicado = True
-        processo.status = 'publicado'
-        
-        historico = ProcessoHistorico(
-            processo_id=processo.id,
-            observacao=f"Processo publicado com número {processo.numero_publicacao}",
-            usuario_id=current_user.id,
-            data_registro=datetime.now()
-        )
-        
-        try:
-            db.session.add(historico)
-            db.session.commit()
-            flash('Processo publicado com sucesso!')
-            return redirect(url_for('visualizar_processo', id=processo.id))
-        except Exception as e:
-            db.session.rollback()
-            flash('Erro ao publicar processo: ' + str(e), 'error')
-            
-    return render_template('processo_publicar.html', form=form, processo=processo)
 @app.route('/exportar_processos')
 @login_required
 def exportar_processos():
