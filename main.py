@@ -1,7 +1,38 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
+from datetime import datetime
 import os
+
+def numero_por_extenso(numero):
+    unidades = ['', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove']
+    dezenas = ['', 'dez', 'vinte', 'trinta', 'quarenta', 'cinquenta', 'sessenta', 'setenta', 'oitenta', 'noventa']
+    teens = ['dez', 'onze', 'doze', 'treze', 'quatorze', 'quinze', 'dezesseis', 'dezessete', 'dezoito', 'dezenove']
+    centenas = ['', 'cento', 'duzentos', 'trezentos', 'quatrocentos', 'quinhentos', 'seiscentos', 'setecentos', 'oitocentos', 'novecentos']
+    
+    if numero == 0:
+        return 'zero'
+    elif numero == 100:
+        return 'cem'
+    
+    num_str = str(int(numero))
+    length = len(num_str)
+    
+    if length == 1:
+        return unidades[int(num_str)]
+    elif length == 2:
+        if int(num_str[0]) == 1:
+            return teens[int(num_str[1])]
+        else:
+            return dezenas[int(num_str[0])] + (' e ' + unidades[int(num_str[1])] if int(num_str[1]) > 0 else '')
+    elif length == 3:
+        centena = centenas[int(num_str[0])]
+        dezena = int(num_str[1:])
+        if dezena == 0:
+            return centena
+        return centena + ' e ' + numero_por_extenso(dezena)
+    else:
+        return str(numero)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(24)
@@ -20,6 +51,14 @@ db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
+
+# Registra o filtro personalizado
+app.jinja_env.filters['number_to_words'] = numero_por_extenso
+
+# Função para obter a data/hora atual no template
+@app.context_processor
+def utility_processor():
+    return {'now': datetime.now}
 
 from routes import *
 
