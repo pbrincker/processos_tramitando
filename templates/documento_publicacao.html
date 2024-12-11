@@ -99,7 +99,7 @@
             </tr>
             <tr>
                 <th>VALOR ESTIMADO:</th>
-                <td>R$ {{ "%.2f"|format(processo.valor_estimado|float) if processo.valor_estimado else 'Não informado' }} ({{ processo.valor_estimado|float|int|number_to_words if processo.valor_estimado else 'valor não informado' }})</td>
+                <td>R$ {{ "%.2f"|format(processo.valor_estimado|float) if processo.valor_estimado else 'Não informado' }} ({{ processo.valor_estimado|number_to_words if processo.valor_estimado else 'valor não informado' }})</td>
             </tr>
         </table>
 

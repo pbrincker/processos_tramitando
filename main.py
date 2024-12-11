@@ -5,34 +5,63 @@ from datetime import datetime
 import os
 
 def numero_por_extenso(numero):
+    if not numero:
+        return 'zero'
+        
+    try:
+        numero = float(numero)
+    except (ValueError, TypeError):
+        return str(numero)
+        
+    if numero == 0:
+        return 'zero'
+    
+    parte_inteira = int(numero)
+    parte_decimal = int((numero - parte_inteira) * 100)
+    
     unidades = ['', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove']
     dezenas = ['', 'dez', 'vinte', 'trinta', 'quarenta', 'cinquenta', 'sessenta', 'setenta', 'oitenta', 'noventa']
     teens = ['dez', 'onze', 'doze', 'treze', 'quatorze', 'quinze', 'dezesseis', 'dezessete', 'dezoito', 'dezenove']
     centenas = ['', 'cento', 'duzentos', 'trezentos', 'quatrocentos', 'quinhentos', 'seiscentos', 'setecentos', 'oitocentos', 'novecentos']
     
-    if numero == 0:
-        return 'zero'
-    elif numero == 100:
-        return 'cem'
-    
-    num_str = str(int(numero))
-    length = len(num_str)
-    
-    if length == 1:
-        return unidades[int(num_str)]
-    elif length == 2:
-        if int(num_str[0]) == 1:
-            return teens[int(num_str[1])]
+    def converter_grupo(n):
+        if n == 0:
+            return ''
+        elif n == 100:
+            return 'cem'
+            
+        s = ''
+        n_str = str(n).zfill(3)
+        
+        # Centenas
+        if int(n_str[0]) > 0:
+            s += centenas[int(n_str[0])]
+            if int(n_str[1:]) > 0:
+                s += ' e '
+        
+        # Dezenas e unidades
+        dezena = int(n_str[1])
+        unidade = int(n_str[2])
+        
+        if dezena == 1:  # Casos especiais (11-19)
+            s += teens[unidade]
         else:
-            return dezenas[int(num_str[0])] + (' e ' + unidades[int(num_str[1])] if int(num_str[1]) > 0 else '')
-    elif length == 3:
-        centena = centenas[int(num_str[0])]
-        dezena = int(num_str[1:])
-        if dezena == 0:
-            return centena
-        return centena + ' e ' + numero_por_extenso(dezena)
+            if dezena > 0:
+                s += dezenas[dezena]
+                if unidade > 0:
+                    s += ' e '
+            if unidade > 0:
+                s += unidades[unidade]
+                
+        return s.strip()
+    
+    texto = converter_grupo(parte_inteira)
+    if parte_decimal > 0:
+        texto += f' reais e {converter_grupo(parte_decimal)} centavos'
     else:
-        return str(numero)
+        texto += ' reais'
+    
+    return texto.strip()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(24)
