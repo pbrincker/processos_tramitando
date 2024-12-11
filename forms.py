@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, TextAreaField, SelectField, IntegerField
-from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError
+from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError, Optional
 
 class LoginForm(FlaskForm):
     username = StringField('Usuário', validators=[DataRequired()])
@@ -119,7 +119,8 @@ class ContratoForm(FlaskForm):
     objeto = TextAreaField('Objeto')
     processo_id = SelectField('Processo', coerce=int)
     fornecedor = StringField('Fornecedor', validators=[DataRequired(), Length(max=200)])
-    valor = StringField('Valor')
+    valor = StringField('Valor', validators=[Optional()], 
+                     description='Formato: 0.00 (opcional)')
     data_assinatura = StringField('Data de Assinatura')
     data_vigencia = StringField('Data de Vigência')
     responsavel_id = SelectField('Responsável', coerce=int)

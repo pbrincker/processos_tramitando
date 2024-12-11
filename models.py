@@ -96,7 +96,7 @@ class Contrato(db.Model):
     objeto = db.Column(db.Text)
     processo_id = db.Column(db.Integer, db.ForeignKey('processo.id'), nullable=False)
     fornecedor = db.Column(db.String(200), nullable=False)
-    valor = db.Column(db.Numeric(15, 2), nullable=True)
+    valor = db.Column(db.Numeric(15, 2), nullable=True)  # Valor pode ser nulo para contratos sem valor definido
     data_assinatura = db.Column(db.Date)
     data_vigencia = db.Column(db.Date)
     status = db.Column(db.String(50), nullable=False, default='vigente')

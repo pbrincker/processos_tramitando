@@ -15,4 +15,5 @@ dependencies = [
     "wtforms>=3.2.1",
     "openpyxl>=3.1.5",
     "weasyprint>=63.1",
+    "sqlalchemy>=2.0.36",
 ]
