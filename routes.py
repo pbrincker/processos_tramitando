@@ -401,6 +401,20 @@ def publicar_processo(id):
 
 # Notificações
 @app.route('/notificacoes')
+@app.route('/processos/publicados')
+@login_required
+def listar_processos_publicados():
+    query = Processo.query.filter_by(publicado=True)
+    
+    # Aplicar filtros de permissão
+    if not current_user.is_admin:
+        if not current_user.can_view_all_processes or \
+           (current_user.can_view_all_processes and not current_user.view_all_processes):
+            query = query.filter_by(responsavel_id=current_user.id)
+    
+    processos = query.order_by(Processo.data_publicacao.desc()).all()
+    return render_template('processos_publicados.html', processos=processos)
+
 @login_required
 def listar_notificacoes():
     notificacoes = NotificacaoProcesso.query.filter_by(

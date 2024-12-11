@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Processos Publicados</h2>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Número</th>
+                        <th>Número Publicação</th>
+                        <th>Data Publicação</th>
+                        <th>Data Sessão</th>
+                        <th>Objeto</th>
+                        <th>Modalidade</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for processo in processos %}
+                    <tr>
+                        <td>{{ processo.numero_processo }}</td>
+                        <td>{{ processo.numero_publicacao }}</td>
+                        <td>{{ processo.data_publicacao.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ processo.data_sessao.strftime('%d/%m/%Y') }}</td>
+                        <td>
+                            <div class="text-truncate" style="max-width: 300px;" data-bs-toggle="tooltip" title="{{ processo.objeto }}">
+                                {{ processo.objeto }}
+                            </div>
+                        </td>
+                        <td>{{ processo.modalidade }}</td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="{{ url_for('visualizar_processo', id=processo.id) }}" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="Visualizar">
+                                    <i data-feather="eye"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
