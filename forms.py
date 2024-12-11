@@ -92,6 +92,8 @@ class PublicacaoForm(FlaskForm):
     ])
     data_publicacao = StringField('Data de Publicação', validators=[DataRequired()])
     data_sessao = StringField('Data da Sessão', validators=[DataRequired()])
+    link_publicacao = StringField('Link da Publicação Oficial', 
+                                validators=[Length(max=500, message='O link deve ter no máximo 500 caracteres')])
 
     def validate_numero_publicacao(self, field):
         # Remove qualquer caractere não numérico

@@ -377,6 +377,7 @@ def publicar_processo(id):
             processo.numero_publicacao = form.numero_publicacao.data
             processo.data_publicacao = datetime.strptime(form.data_publicacao.data, '%Y-%m-%d').date()
             processo.data_sessao = datetime.strptime(form.data_sessao.data, '%Y-%m-%d').date()
+            processo.link_publicacao = form.link_publicacao.data
             processo.publicado = True
             processo.status = 'publicado'
             

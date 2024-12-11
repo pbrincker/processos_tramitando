@@ -47,6 +47,18 @@
                         {% endif %}
                     </div>
 
+                    <div class="mb-3">
+                        {{ form.link_publicacao.label(class="form-label") }}
+                        {{ form.link_publicacao(class="form-control", placeholder="https://diariooficial.exemplo.gov.br/publicacao/123") }}
+                        {% if form.link_publicacao.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.link_publicacao.errors %}
+                            <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                         <a href="{{ url_for('visualizar_processo', id=processo.id) }}" class="btn btn-secondary me-md-2">Cancelar</a>
                         <button type="submit" class="btn btn-primary">Publicar</button>

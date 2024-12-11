@@ -38,6 +38,11 @@
                                 <a href="{{ url_for('visualizar_processo', id=processo.id) }}" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="Visualizar">
                                     <i data-feather="eye"></i>
                                 </a>
+                                {% if processo.link_publicacao %}
+                                <a href="{{ processo.link_publicacao }}" target="_blank" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="Acessar Publicação Oficial">
+                                    <i data-feather="external-link"></i>
+                                </a>
+                                {% endif %}
                             </div>
                         </td>
                     </tr>

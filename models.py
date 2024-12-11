@@ -42,6 +42,7 @@ class Processo(db.Model):
     data_publicacao = db.Column(db.Date)
     data_sessao = db.Column(db.Date)
     publicado = db.Column(db.Boolean, default=False)
+    link_publicacao = db.Column(db.String(500))  # URL da publicação oficial
 
 class ProcessoHistorico(db.Model):
     id = db.Column(db.Integer, primary_key=True)
