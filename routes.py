@@ -368,6 +368,9 @@ def tramitar_processo(id):
 @login_required
 def publicar_processo(id):
     processo = Processo.query.get_or_404(id)
+    if processo.responsavel_id != current_user.id and not current_user.is_admin:
+        flash('Você não tem permissão para publicar este processo')
+        return redirect(url_for('dashboard'))
     form = PublicacaoForm()
     
     if form.validate_on_submit():

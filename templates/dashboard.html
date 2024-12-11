@@ -177,7 +177,7 @@
                                 <a href="{{ url_for('tramitar_processo', id=processo.id) }}" class="btn btn-sm btn-outline-warning" data-bs-toggle="tooltip" title="Tramitar">
                                     <i data-feather="git-branch"></i>
                                 </a>
-                                {% if not processo.publicado and current_user.is_admin %}
+                                {% if not processo.publicado %}
                                 <a href="{{ url_for('publicar_processo', id=processo.id) }}" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="Publicar">
                                     <i data-feather="book"></i>
                                 </a>
