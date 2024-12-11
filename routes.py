@@ -7,6 +7,8 @@ from forms import LoginForm, UserForm, ProcessoForm, TramitacaoForm, AlterarSenh
 import logging
 from openpyxl import Workbook
 from io import BytesIO
+from weasyprint import HTML
+import tempfile
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -387,6 +389,15 @@ def publicar_processo(id):
                 data_registro=datetime.now()
             )
             
+            # Gera o documento de publicação
+            html_content = render_template('documento_publicacao.html', processo=processo)
+            html = HTML(string=html_content)
+            
+            # Cria um arquivo temporário para o PDF
+            with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as pdf_file:
+                html.write_pdf(pdf_file.name)
+                processo.documento_publicacao_path = pdf_file.name
+            
             db.session.add(historico)
             db.session.commit()
             flash('Processo publicado com sucesso!')
@@ -398,6 +409,37 @@ def publicar_processo(id):
             flash('Erro ao publicar processo: ' + str(e))
     
     return render_template('processo_publicar.html', form=form, processo=processo)
+
+@app.route('/processo/<int:id>/documento-publicacao')
+@login_required
+def download_documento_publicacao(id):
+    processo = Processo.query.get_or_404(id)
+    
+    if not processo.publicado:
+        flash('Este processo ainda não foi publicado.')
+        return redirect(url_for('visualizar_processo', id=processo.id))
+    
+    try:
+        # Gera o documento novamente caso não exista
+        if not hasattr(processo, 'documento_publicacao_path'):
+            html_content = render_template('documento_publicacao.html', processo=processo)
+            html = HTML(string=html_content)
+            
+            with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as pdf_file:
+                html.write_pdf(pdf_file.name)
+                processo.documento_publicacao_path = pdf_file.name
+                db.session.commit()
+        
+        return send_file(
+            processo.documento_publicacao_path,
+            download_name=f'publicacao_{processo.numero_publicacao.replace("/", "-")}.pdf',
+            as_attachment=True,
+            mimetype='application/pdf'
+        )
+    except Exception as e:
+        logger.error(f"Erro ao gerar documento de publicação: {str(e)}")
+        flash('Erro ao gerar documento de publicação.')
+        return redirect(url_for('visualizar_processo', id=processo.id))
 
 # Notificações e Processos Publicados
 @app.route('/notificacoes')

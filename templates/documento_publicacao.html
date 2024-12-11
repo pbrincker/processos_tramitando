@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 40px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .content {
+            margin-bottom: 20px;
+        }
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>AVISO DE {{ processo.modalidade|upper|replace('_', ' ') }}</h2>
+        <h3>Nº {{ processo.numero_publicacao }}</h3>
+    </div>
+
+    <div class="content">
+        <p>O Município de [Nome do Município], através de sua Comissão de Licitação, torna público que realizará licitação na modalidade {{ processo.modalidade|replace('_', ' ')|title }}, conforme especificações a seguir:</p>
+
+        <table>
+            <tr>
+                <th>Processo Nº:</th>
+                <td>{{ processo.numero_processo }}</td>
+            </tr>
+            <tr>
+                <th>Objeto:</th>
+                <td>{{ processo.objeto }}</td>
+            </tr>
+            <tr>
+                <th>Data de Abertura:</th>
+                <td>{{ processo.data_sessao.strftime('%d/%m/%Y') }}</td>
+            </tr>
+            <tr>
+                <th>Valor Estimado:</th>
+                <td>R$ {{ "%.2f"|format(processo.valor_estimado|float) if processo.valor_estimado else 'Não informado' }}</td>
+            </tr>
+        </table>
+
+        <p>O Edital completo poderá ser obtido junto à Comissão de Licitação, no endereço [Endereço completo], no horário de [Horário de atendimento], ou através do site [Site do município].</p>
+    </div>
+
+    <div class="footer">
+        <p>[Cidade], {{ processo.data_publicacao.strftime('%d de %B de %Y')|replace('January', 'Janeiro')|replace('February', 'Fevereiro')|replace('March', 'Março')|replace('April', 'Abril')|replace('May', 'Maio')|replace('June', 'Junho')|replace('July', 'Julho')|replace('August', 'Agosto')|replace('September', 'Setembro')|replace('October', 'Outubro')|replace('November', 'Novembro')|replace('December', 'Dezembro') }}</p>
+        <br><br>
+        <p>_________________________________</p>
+        <p>Presidente da Comissão de Licitação</p>
+    </div>
+</body>
+</html>

@@ -105,9 +105,15 @@
                 <a href="{{ url_for('tramitar_processo', id=processo.id) }}" class="btn btn-info me-2">
                     <i data-feather="git-branch"></i> Tramitar
                 </a>
+                {% if not processo.publicado %}
                 <a href="{{ url_for('publicar_processo', id=processo.id) }}" class="btn btn-warning me-2">
                     <i data-feather="book"></i> Publicar
                 </a>
+                {% else %}
+                <a href="{{ url_for('download_documento_publicacao', id=processo.id) }}" class="btn btn-success me-2">
+                    <i data-feather="download"></i> Download Publicação
+                </a>
+                {% endif %}
                 {% if current_user.is_admin %}
                 <a href="{{ url_for('editar_processo', id=processo.id) }}" class="btn btn-primary">
                     <i data-feather="edit-2"></i> Editar
