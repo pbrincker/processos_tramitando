@@ -21,23 +21,56 @@
                 <ul class="navbar-nav me-auto">
                     {% if current_user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
+                        <a class="nav-link" href="{{ url_for('dashboard') }}">
+                            <i data-feather="home"></i> Dashboard
+                        </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('listar_processos_publicados') }}">Processos Publicados</a>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i data-feather="file-text"></i> Processos
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('novo_processo') }}">
+                                    <i data-feather="plus"></i> Novo Processo
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('listar_processos_publicados') }}">
+                                    <i data-feather="check-circle"></i> Processos Publicados
+                                </a>
+                            </li>
+                        </ul>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('relatorio_processos_publicados') }}">Relatório de Publicações</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('novo_processo') }}">Novo Processo</a>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i data-feather="bar-chart-2"></i> Relatórios
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('relatorio_processos_publicados') }}">
+                                    <i data-feather="file"></i> Publicações
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                     {% if current_user.is_admin %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('listar_usuarios') }}">Usuários</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('listar_fases') }}">Fases</a>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i data-feather="settings"></i> Administração
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('listar_usuarios') }}">
+                                    <i data-feather="users"></i> Usuários
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('listar_fases') }}">
+                                    <i data-feather="flag"></i> Fases
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                     {% endif %}
                     {% endif %}
