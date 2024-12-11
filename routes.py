@@ -411,7 +411,11 @@ def listar_notificacoes():
 @app.route('/processos/publicados')
 @login_required
 def listar_processos_publicados():
-    query = Processo.query.filter_by(publicado=True)
+    hoje = datetime.now().date()
+    query = Processo.query.filter(
+        Processo.publicado == True,
+        Processo.data_sessao >= hoje
+    )
     
     # Aplicar filtros de permissão
     if not current_user.is_admin:
@@ -419,7 +423,7 @@ def listar_processos_publicados():
            (current_user.can_view_all_processes and not current_user.view_all_processes):
             query = query.filter_by(responsavel_id=current_user.id)
     
-    processos = query.order_by(Processo.data_publicacao.desc()).all()
+    processos = query.order_by(Processo.data_sessao.asc()).all()
     return render_template('processos_publicados.html', processos=processos)
 
 @app.route('/notificacoes/<int:id>/lida', methods=['POST'])
