@@ -38,6 +38,10 @@ class Processo(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     historico = db.relationship('ProcessoHistorico', backref='processo', lazy=True, order_by='ProcessoHistorico.created_at.desc()')
+    numero_publicacao = db.Column(db.String(10))
+    data_publicacao = db.Column(db.Date)
+    data_sessao = db.Column(db.Date)
+    publicado = db.Column(db.Boolean, default=False)
 
 class ProcessoHistorico(db.Model):
     id = db.Column(db.Integer, primary_key=True)

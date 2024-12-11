@@ -71,6 +71,33 @@ class TramitacaoForm(FlaskForm):
                 return False
         return True
 
+class PublicacaoForm(FlaskForm):
+    numero_publicacao = StringField('Número', validators=[
+        DataRequired(), 
+        Length(max=4, message='O número deve ter no máximo 4 dígitos')
+    ])
+    data_publicacao = StringField('Data de Publicação', validators=[DataRequired()])
+    data_sessao = StringField('Data da Sessão', validators=[DataRequired()])
+
+    def validate_numero_publicacao(self, field):
+        # Remove qualquer caractere não numérico
+        numero = ''.join(filter(str.isdigit, field.data))
+        
+        # Verifica se tem mais de 4 dígitos
+        if len(numero) > 4:
+            raise ValidationError('O número deve ter no máximo 4 dígitos')
+            
+        # Preenche com zeros à esquerda se necessário
+        numero = numero.zfill(4)
+        
+        # Adiciona o ano atual
+        from datetime import datetime
+        ano_atual = datetime.now().year
+        numero = f"{numero}/{ano_atual}"
+        
+        # Atualiza o valor do campo
+        field.data = numero
+
 class ProcessoFaseForm(FlaskForm):
     codigo = StringField('Código', validators=[DataRequired(), Length(max=50)])
     descricao = StringField('Descrição', validators=[DataRequired(), Length(max=100)])

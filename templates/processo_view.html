@@ -105,6 +105,9 @@
                 <a href="{{ url_for('tramitar_processo', id=processo.id) }}" class="btn btn-info me-2">
                     <i data-feather="git-branch"></i> Tramitar
                 </a>
+                <a href="{{ url_for('publicar_processo', id=processo.id) }}" class="btn btn-warning me-2">
+                    <i data-feather="book"></i> Publicar
+                </a>
                 {% if current_user.is_admin %}
                 <a href="{{ url_for('editar_processo', id=processo.id) }}" class="btn btn-primary">
                     <i data-feather="edit-2"></i> Editar

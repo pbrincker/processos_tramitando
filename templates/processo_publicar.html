@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">Publicar Processo {{ processo.numero_processo }}</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    <div class="mb-3">
+                        {{ form.numero_publicacao.label(class="form-label") }}
+                        {{ form.numero_publicacao(class="form-control", maxlength="4", placeholder="Ex: 1234 (será formatado como 1234/2024)") }}
+                        {% if form.numero_publicacao.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.numero_publicacao.errors %}
+                            <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.data_publicacao.label(class="form-label") }}
+                        {{ form.data_publicacao(class="form-control", type="date") }}
+                        {% if form.data_publicacao.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.data_publicacao.errors %}
+                            <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.data_sessao.label(class="form-label") }}
+                        {{ form.data_sessao(class="form-control", type="date") }}
+                        {% if form.data_sessao.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.data_sessao.errors %}
+                            <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('visualizar_processo', id=processo.id) }}" class="btn btn-secondary me-md-2">Cancelar</a>
+                        <button type="submit" class="btn btn-primary">Publicar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
