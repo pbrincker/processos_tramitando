@@ -177,6 +177,9 @@
                                 <a href="{{ url_for('tramitar_processo', id=processo.id) }}" class="btn btn-sm btn-outline-warning" data-bs-toggle="tooltip" title="Tramitar">
                                     <i data-feather="git-branch"></i>
                                 </a>
+                                <a href="{{ url_for('publicar_processo', id=processo.id) }}" class="btn btn-sm btn-outline-secondary" data-bs-toggle="tooltip" title="Publicar">
+                                    <i data-feather="book"></i>
+                                </a>
                                 <a href="{{ url_for('editar_processo', id=processo.id) }}" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="Editar">
                                     <i data-feather="edit-2"></i>
                                 </a>

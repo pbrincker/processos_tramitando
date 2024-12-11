@@ -155,8 +155,8 @@ def dashboard():
         responsavel_ids = [int(r) for r in responsavel_list]
         query = query.filter(Processo.responsavel_id.in_(responsavel_ids))
     
-    # Executa a consulta
-    processos = query.all()
+    # Executa a consulta ordenando por data de criação decrescente
+    processos = query.order_by(Processo.created_at.desc()).all()
     
     # Métricas
     import logging
@@ -542,6 +542,7 @@ def publicar_processo(id):
         processo.data_publicacao = datetime.strptime(form.data_publicacao.data, '%Y-%m-%d').date()
         processo.data_sessao = datetime.strptime(form.data_sessao.data, '%Y-%m-%d').date()
         processo.publicado = True
+        processo.status = 'publicado'
         
         historico = ProcessoHistorico(
             processo_id=processo.id,
